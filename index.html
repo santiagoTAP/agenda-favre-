@@ -161,8 +161,6 @@ main{padding:16px 14px}
 .cal-cell.today .num{background:var(--red);color:#fff}
 .cal-cell.sel{box-shadow:inset 0 0 0 2px var(--ink)}
 .cal-evs{display:flex;flex-direction:column;gap:2px;overflow:hidden}
-.cal-ev{font-size:9.5px;font-weight:600;line-height:1.25;padding:2px 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  background:var(--paper3);color:var(--ink2);border-left:2.5px solid var(--otro)}
 .cal-ev.reunion{border-left-color:var(--reunion);background:#eef4fd;color:#1a4a9c}
 .cal-ev.venta{border-left-color:var(--venta);background:#e9f7ef;color:#15784a}
 .cal-ev.alquilar{border-left-color:var(--alquilar);background:#fdf2e3;color:#9a5a06}
@@ -302,10 +300,10 @@ const WEBHOOK_CREAR = "https://hook.us1.make.com/ttal396rhyg6qcjpsmqcwybk8su5o6q
 const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
 const FRANJAS={'manana':{label:'Mañana · 7 a 12',min:7,max:12},'mediodia':{label:'Mediodía · 12 a 15',min:12,max:15},'tarde':{label:'Tarde · 15 en adelante',min:15,max:24}};
 
-const DEMO = []; // Fallback por si falla la conexión
+const DEMO = [];
 
 let DATA=[];
-let CONTACTOS=[]; // <--- Aquí guardaremos el array de contactos con {id, name}
+let CONTACTOS=[]; 
 let F={persona:new Set(),objetivo:new Set(),franja:new Set(),dia:'',texto:'',orden:'fecha-asc'};
 let panelAbierto=null;
 
@@ -324,7 +322,7 @@ function personas(){const s=new Set();DATA.forEach(d=>(d.persona||'').split(',')
 function objetivos(){const s=new Set();DATA.forEach(d=>{if(d.objetivo)s.add(d.objetivo);});return[...s].sort();}
 
 function mapURL(d){
-  if(d.lat&&d.lng)return 'http://maps.google.com/?q='+d.lat+','+d.lng;
+  if(d.lat&&d.lng) return 'https://www.google.com/maps/search/?api=1&query=' + d.lat + ',' + d.lng;
   return d.ubicacion?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.ubicacion):'';
 }
 
@@ -348,7 +346,7 @@ function panelHTML(tipo){
     return sec('Filtrar por objetivo',objetivos().map(o=>opt(o,F.objetivo.has(o),`toggleSet('objetivo','${esc(o)}')`,'obj-'+(OBJ_MAP[o]||'otro'))).join(''));
   }
   if(tipo==='franja'){
-    return sec('Franja horaria',Object.keys(FRANJAS).map(k=>opt(FRANJAS[k].label,F.franja.has(k),`toggleSet('franja','${k}')`)).join(''));
+    return sec('Franja horaria',Object.keys(FRANJAS).map(k=>opt(FRANANJAS[k].label,F.franja.has(k),`toggleSet('franja','${k}')`)).join(''));
   }
   if(tipo==='fecha'){
     return sec('Día de la cita',
@@ -536,11 +534,15 @@ function abrirModal(diaK){
 function cerrarModal(){$('#modalBg').classList.remove('show');}
 function pickObj(o,el){objSel=o;document.querySelectorAll('#fObjetivo .op').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
 
-// Genera las opciones visuales del buscador de contactos
 function actualizarDatalistContactos(){
   const dl = $('#listaContactos');
   if(!dl) return;
-  dl.innerHTML = CONTACTOS.map(c => `<option value="${esc(c.name)}"></option>`).join('');
+  dl.innerHTML = CONTACTOS.map(c => {
+    if(c && c.name) {
+       return `<option value="${esc(c.name)}"></option>`;
+    }
+    return '';
+  }).join('');
 }
 
 async function enviarCita(){
@@ -552,8 +554,7 @@ async function enviarCita(){
   if(!evento){toast('Poné un título para la cita',true);return;}
   if(!fecha){toast('Elegí una fecha',true);return;}
 
-  // Buscamos si el nombre ingresado coincide con un contacto para mandar también su ID
-  const matchContacto = CONTACTOS.find(c => c.name && c.name.toLowerCase() === nombreContacto.toLowerCase());
+  const matchContacto = CONTACTOS.find(c => c && c.name && c.name.toLowerCase() === nombreContacto.toLowerCase());
   const contactoId = matchContacto ? matchContacto.id : '';
 
   const payload={
@@ -564,7 +565,7 @@ async function enviarCita(){
     objetivo:objSel,
     persona:$('#fPersona').value.trim(),
     contacto:nombreContacto,
-    contacto_id:contactoId, // <--- Enviamos el ID detectado
+    contacto_id:contactoId, 
     telefono:$('#fTelefono').value.trim(),
     ubicacion:$('#fUbicacion').value.trim()
   };
@@ -650,26 +651,41 @@ async function cargar(){
   try{
     const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar',token:API_TOKEN})});
     if(!res.ok)throw new Error('HTTP '+res.status);
-    const json=await res.json();
     
-    // Validamos si la respuesta viene con el objeto estructurado { agenda: ..., contactos: ... }
-    if(json && json.agenda){
-      DATA = Array.isArray(json.agenda) ? json.agenda : [];
-      CONTACTOS = Array.isArray(json.contactos) ? json.contactos : [];
+    let json=await res.json();
+    console.log("Respuesta cruda recibida de Make:", json);
+    
+    // 1. Desempaquetar si Make responde con un array que contiene el objeto dentro [ {agenda, contactos} ]
+    if(Array.isArray(json) && json.length > 0 && json[0].agenda){
+      json = json[0];
+    }
+    
+    // 2. Comprobar estructura esperada de propiedades agrupadas
+    if(json && (json.agenda !== undefined || json.contactos !== undefined)){
+      
+      // Sanitizar por si Make los envía codificados como Strings de texto en lugar de JSON Arrays
+      let agendaData = typeof json.agenda === 'string' ? JSON.parse(json.agenda) : json.agenda;
+      let contactosData = typeof json.contactos === 'string' ? JSON.parse(json.contactos) : json.contactos;
+      
+      DATA = Array.isArray(agendaData) ? agendaData : [];
+      CONTACTOS = Array.isArray(contactosData) ? contactosData : [];
+      
     } else {
+      // Fallback por si en algún momento devuelve solo el listado plano de agenda
       DATA = Array.isArray(json) ? json : (json.items || json.data || []);
       CONTACTOS = [];
     }
     
     $('#statusPill').className='status-pill live';$('#statusTxt').textContent='En vivo';
     refreshUI();
-    actualizarDatalistContactos(); // <--- Rellenamos el datalist dinámicamente
+    actualizarDatalistContactos(); 
     toast('Agenda actualizada');
   }catch(e){
+    console.error("Error detallado procesando la carga:", e);
     DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
     refreshUI();
     actualizarDatalistContactos();
-    toast('No se pudo conectar a Make — mostrando demo',true);
+    toast('Error en formato de datos del webhook',true);
   }finally{btn.classList.remove('loading');}
 }
 cargar();
