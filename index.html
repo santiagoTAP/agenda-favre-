@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#ffffff">
+<title>Agenda Inmobiliaria Favre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#e60000; --red-dk:#c20000; --red-soft:#ffe5e5;
+  --ink:#0a0a0a; --ink2:#222; --paper:#ffffff; --paper2:#f5f5f6; --paper3:#ededee;
+  --line:#e2e2e4; --line2:#d4d4d6; --txt:#0a0a0a; --muted:#6e6e73; --faint:#a0a0a5;
+  --reunion:#2563c9; --venta:#1f9d57; --alquilar:#d97706; --tasacion:#8b3fc9; --turno:#c2185b; --otro:#6e6e73;
+  --ok:#1f9d57; --err:#e60000;
+  --r:14px; --sh:0 2px 8px rgba(0,0,0,.06),0 8px 24px rgba(0,0,0,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--paper2);color:var(--txt);font-family:'Archivo',sans-serif;overscroll-behavior:none}
+body{max-width:520px;margin:0 auto;min-height:100vh;position:relative;padding-bottom:88px}
+
+header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:11px;padding:14px 18px 12px}
+.logo{width:42px;height:42px;flex-shrink:0;background:var(--red);border-radius:9px;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(230,0,0,.3)}
+.logo svg{width:24px;height:24px}
+.brand-txt h1{font-weight:800;font-size:19px;letter-spacing:-.4px;line-height:1;color:var(--ink)}
+.brand-txt .sub{font-family:'Archivo Narrow';font-weight:600;font-size:11px;letter-spacing:2.5px;
+  text-transform:uppercase;color:var(--red);margin-top:3px}
+.h-meta{display:flex;align-items:center;justify-content:space-between;padding:0 18px 12px}
+.count{font-size:13px;color:var(--muted);font-weight:600}.count b{color:var(--ink)}
+.status-pill{font-size:10px;padding:4px 10px;border-radius:20px;font-weight:700;letter-spacing:.5px;
+  background:var(--paper3);color:var(--muted);display:flex;align-items:center;gap:5px;text-transform:uppercase}
+.status-pill .led{width:6px;height:6px;border-radius:50%;background:var(--faint)}
+.status-pill.demo .led{background:var(--alquilar)}
+.status-pill.live{background:#e7f6ee;color:var(--ok)}.status-pill.live .led{background:var(--ok)}
+
+/* search + filtros */
+.search-wrap{padding:0 18px 12px;position:relative}
+.search{width:100%;border:1.5px solid var(--line2);border-radius:11px;padding:11px 14px 11px 38px;
+  font-family:'Archivo';font-size:14px;color:var(--ink);background:var(--paper2);outline:none;transition:.15s}
+.search:focus{border-color:var(--red);background:var(--paper)}
+.search-wrap svg{position:absolute;left:30px;top:11px;color:var(--faint)}
+.search-clear{position:absolute;right:30px;top:8px;width:24px;height:24px;border:none;border-radius:50%;
+  background:var(--paper3);color:var(--muted);font-size:14px;cursor:pointer;display:none}
+.search-clear.show{display:block}
+
+.filter-bar{display:flex;align-items:center;gap:8px;padding:0 18px 12px;overflow-x:auto;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.fbtn{flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;
+  padding:8px 14px;border-radius:30px;background:var(--paper);border:1.5px solid var(--line2);
+  color:var(--ink2);cursor:pointer;transition:.16s;white-space:nowrap}
+.fbtn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.fbtn .badge{background:var(--red);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;
+  border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.fbtn.on .badge{background:#fff;color:var(--ink)}
+.fbtn svg{transition:.2s}
+.fbtn.open svg.chev{transform:rotate(180deg)}
+.clear-all{flex:0 0 auto;font-size:12px;font-weight:700;color:var(--red);background:none;border:none;
+  cursor:pointer;padding:8px 6px;text-decoration:underline;display:none}
+.clear-all.show{display:block}
+
+/* panel desplegable */
+.panel{max-height:0;overflow:hidden;transition:max-height .3s ease;background:var(--paper2);border-bottom:1px solid var(--line)}
+.panel.open{max-height:520px}
+.panel-inner{padding:14px 18px}
+.panel-sec{margin-bottom:16px}
+.panel-sec:last-child{margin-bottom:4px}
+.panel-sec h4{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:9px}
+.opts{display:flex;flex-wrap:wrap;gap:7px}
+.opt{font-size:13px;font-weight:600;padding:7px 13px;border-radius:30px;background:var(--paper);
+  border:1.5px solid var(--line2);color:var(--ink2);cursor:pointer;transition:.15s}
+.opt.sel{background:var(--red);color:#fff;border-color:var(--red)}
+.opt.obj-reunion.sel{background:var(--reunion);border-color:var(--reunion)}
+.opt.obj-venta.sel{background:var(--venta);border-color:var(--venta)}
+.opt.obj-alquilar.sel{background:var(--alquilar);border-color:var(--alquilar)}
+.opt.obj-tasacion.sel{background:var(--tasacion);border-color:var(--tasacion)}
+.opt.obj-turno.sel{background:var(--turno);border-color:var(--turno)}
+.dateinput{border:1.5px solid var(--line2);border-radius:9px;padding:8px 11px;font-family:'Archivo';font-size:13px;color:var(--ink);background:var(--paper);outline:none}
+.dateinput:focus{border-color:var(--red)}
+
+main{padding:16px 14px}
+.day-group{margin-bottom:24px}
+.day-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;padding:0 4px}
+.day-label{font-size:13px;font-weight:800;color:var(--ink);text-transform:uppercase;letter-spacing:.5px}
+.day-label.is-today{color:var(--red)}
+.day-line{flex:1;height:2px;background:var(--line);border-radius:2px}
+.day-count{font-size:11px;color:#fff;font-weight:700;background:var(--ink);min-width:20px;height:20px;
+  border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 6px}
+
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);
+  padding:15px;margin-bottom:11px;position:relative;overflow:hidden;box-shadow:var(--sh);
+  animation:rise .4s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--otro)}
+.card.t-reunion::before{background:var(--reunion)}.card.t-venta::before{background:var(--venta)}
+.card.t-alquilar::before{background:var(--alquilar)}.card.t-tasacion::before{background:var(--tasacion)}
+.card.t-turno::before{background:var(--turno)}
+.c-top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}
+.c-time{font-size:23px;font-weight:900;line-height:1;letter-spacing:-1px;color:var(--ink)}
+.c-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;padding:5px 9px;border-radius:7px;color:#fff}
+.c-tag.reunion{background:var(--reunion)}.c-tag.venta{background:var(--venta)}
+.c-tag.alquilar{background:var(--alquilar)}.c-tag.tasacion{background:var(--tasacion)}
+.c-tag.turno{background:var(--turno)}.c-tag.otro{background:var(--otro)}
+.c-title{font-size:15px;font-weight:600;line-height:1.35;margin-bottom:10px;color:var(--ink)}
+.c-meta{display:flex;flex-direction:column;gap:6px;margin-bottom:13px}
+.c-row{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.c-row svg{flex-shrink:0;color:var(--faint)}.c-row b{color:var(--ink2);font-weight:600}
+.c-actions{display:flex;gap:8px}
+.act{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:10px;
+  font-size:13px;font-weight:700;cursor:pointer;border:1.5px solid var(--line2);background:var(--paper);
+  color:var(--ink2);text-decoration:none;transition:.15s}
+.act svg{width:15px;height:15px}.act:active{transform:scale(.96)}
+.act.wa{background:#e7f6ee;color:var(--ok);border-color:#bfe6cf}
+.act.map{background:var(--red-soft);color:var(--red-dk);border-color:#ffc9c9}
+.act.disabled{opacity:.4;pointer-events:none}
+.person-badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.pb{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--paper3);color:var(--ink2)}
+.c-foot{font-size:11px;color:var(--faint);margin-top:9px;font-weight:500}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty svg{color:var(--line2);margin-bottom:14px}
+.loader{text-align:center;padding:50px 20px;color:var(--muted)}
+.spin{width:30px;height:30px;border:3px solid var(--line);border-top-color:var(--red);border-radius:50%;margin:0 auto 14px;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.fab-refresh{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:30;background:var(--red);
+  color:#fff;border:none;padding:14px 26px;border-radius:30px;font-family:'Archivo';font-size:14px;font-weight:800;
+  cursor:pointer;box-shadow:0 6px 22px rgba(230,0,0,.4);display:flex;align-items:center;gap:8px;transition:.15s}
+.fab-refresh:active{transform:translateX(-50%) scale(.95)}.fab-refresh.loading svg{animation:sp .7s linear infinite}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);
+  color:#fff;padding:12px 20px;border-radius:11px;font-size:13px;z-index:40;opacity:0;transition:.3s;
+  box-shadow:var(--sh);pointer-events:none;max-width:90%;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.toast.err{background:var(--red)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M5 3h14v4H10v3h7v4h-7v7H5V3z" fill="#fff"/></svg></div>
+    <div class="brand-txt"><h1>Agenda Favre</h1><div class="sub">Inmobiliaria</div></div>
+  </div>
+  <div class="h-meta">
+    <div class="count" id="subCount">Cargando…</div>
+    <div class="status-pill demo" id="statusPill"><span class="led"></span><span id="statusTxt">Demo</span></div>
+  </div>
+  <div class="search-wrap">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+    <input class="search" id="search" placeholder="Buscar contacto, evento, dirección…" oninput="onSearch(this.value)">
+    <button class="search-clear" id="searchClear" onclick="clearSearch()">×</button>
+  </div>
+  <div class="filter-bar">
+    <button class="fbtn" id="tgPersona" onclick="togglePanel('persona')">Persona <span class="badge" id="bPersona" style="display:none">0</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="fbtn" id="tgObjetivo" onclick="togglePanel('objetivo')">Objetivo <span class="badge" id="bObjetivo" style="display:none">0</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="fbtn" id="tgFranja" onclick="togglePanel('franja')">Horario <span class="badge" id="bFranja" style="display:none">0</span><svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="fbtn" id="tgFecha" onclick="togglePanel('fecha')">Día <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="fbtn" id="tgOrden" onclick="togglePanel('orden')">Orden <svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <button class="clear-all" id="clearAll" onclick="clearAll()">Limpiar</button>
+  </div>
+  <div class="panel" id="panel"><div class="panel-inner" id="panelInner"></div></div>
+</header>
+
+<main id="main"><div class="loader"><div class="spin"></div><p>Cargando agenda…</p></div></main>
+
+<button class="fab-refresh" id="refreshBtn" onclick="cargar()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg> Actualizar
+</button>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   CONFIG  —  completá estos dos valores
+   ============================================================
+   WEBHOOK_URL : la URL del Custom Webhook de Make.
+   API_TOKEN   : una clave que vos inventás (ej: "favre-2026-xY7k").
+                 Tiene que ser EXACTAMENTE la misma que pongas
+                 en el filtro de validación dentro de Make.
+   Mientras WEBHOOK_URL esté vacío, la app usa los datos de DEMO.
+   Nota: al ser una página pública, el token queda visible en el
+   código. Sirve para revocar/rotar acceso, no como secreto fuerte.
+*/
+const WEBHOOK_URL = "";   // <--- pegá tu URL de Make aquí
+const API_TOKEN   = "";   // <--- pegá tu token (igual al de Make)
+
+const DEMO = [
+  {
+    "id": "11200048018",
+    "evento": "10.00HS en Avenida Simón Bolívar 103 con Sofia Riccobene 2281575905",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-06T10:00:00",
+    "ubicacion": "Avenida Simón Bolívar 103, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Sofia Riccobene",
+    "telefono": "2281575905",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 5, 2026 4:14 PM",
+    "creacion_iso": "2026-02-05T16:14:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11200017252",
+    "evento": "15.00HS en Fuerte Independencia 98 con Inmobiliaria Medina 2494338514",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-06T15:00:00",
+    "ubicacion": "Fuerte Independencia 98, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Inmobiliaria Medina",
+    "telefono": "2494338514",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 5, 2026 4:13 PM",
+    "creacion_iso": "2026-02-05T16:13:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11195797818",
+    "evento": "15.00HS en Richieri & Chile con",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-05T15:00:00",
+    "ubicacion": "Richieri & Chile, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Alquilar",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 5, 2026 10:52 AM",
+    "creacion_iso": "2026-02-05T10:52:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11188014329",
+    "evento": "09.15HS en Antonena 179 con Emilio Marcatario",
+    "persona": "Santiago Favre, Gustavo",
+    "fecha": "2026-02-05T09:15:00",
+    "ubicacion": "Antonena 179, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Emilio Marcatario",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 4, 2026 3:10 PM",
+    "creacion_iso": "2026-02-04T15:10:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11196626320",
+    "evento": "12.00HS escribania badillo fideicomosion avellaneda",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-10T12:00:00",
+    "ubicacion": "",
+    "objetivo": "Reunion",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Error",
+    "creacion": "Estela Feb 5, 2026 11:59 AM",
+    "creacion_iso": "2026-02-05T11:59:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11197944614",
+    "evento": "15:30 hs 11 de Septiembre 326 c/ Deby Cardinale y Franco Bellavite",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-06T15:30:00",
+    "ubicacion": "",
+    "objetivo": "Venta",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Error",
+    "creacion": "Estela Feb 5, 2026 1:38 PM",
+    "creacion_iso": "2026-02-05T13:38:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11197968629",
+    "evento": "16 hs 25 de mayo 1072 c/Deby Cardinale y Franco Bellavite",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-06T16:00:00",
+    "ubicacion": "",
+    "objetivo": "Venta",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Estela Feb 5, 2026 1:39 PM",
+    "creacion_iso": "2026-02-05T13:39:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11199292410",
+    "evento": "11.00HS en Tandil con Laura Cattoni 2494666968",
+    "persona": "Santiago Favre, Gustavo",
+    "fecha": "2026-02-06T11:00:00",
+    "ubicacion": "Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Tasacion",
+    "contacto": "Laura Cattoni",
+    "telefono": "2494666968",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 5, 2026 3:15 PM",
+    "creacion_iso": "2026-02-05T15:15:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11199658412",
+    "evento": "09.30HS en General Rodríguez 1140 con Marcos por local Rodriguez 1140 2494623539",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-06T09:30:00",
+    "ubicacion": "General Rodríguez 1140, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Marcos por local Rodriguez 1140",
+    "telefono": "2494623539",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 5, 2026 3:45 PM",
+    "creacion_iso": "2026-02-05T15:45:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11199834651",
+    "evento": "18.00HS Reunión Fideicomiso Cerrito en ofic Castagnino",
+    "persona": "Gustavo",
+    "fecha": "2026-02-09T18:00:00",
+    "ubicacion": "",
+    "objetivo": "Reunion",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 5, 2026 3:59 PM",
+    "creacion_iso": "2026-02-05T15:59:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11206523904",
+    "evento": "10.45HS en General Rodríguez 1170 con Roberto Rekofski 542494584465",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-09T10:45:00",
+    "ubicacion": "General Rodríguez 1170, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Roberto Rekofski",
+    "telefono": "542494584465",
+    "estado": "Vigente",
+    "creacion": "Santiago Favre Feb 6, 2026 10:35 AM",
+    "creacion_iso": "2026-02-06T10:35:00",
+    "creado_por": "Santiago"
+  },
+  {
+    "id": "11206763951",
+    "evento": "17.00HS en Calle John Lennon 82 con Franco Bellavitte 1136824646",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-06T17:00:00",
+    "ubicacion": "Calle John Lennon 82, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Franco Bellavitte",
+    "telefono": "1136824646",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 6, 2026 11:01 AM",
+    "creacion_iso": "2026-02-06T11:01:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11214245982",
+    "evento": "11.00HS en Av. Brasil con Franco Bellavitte 1136824646",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-09T11:00:00",
+    "ubicacion": "Av. Brasil, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Franco Bellavitte",
+    "telefono": "1136824646",
+    "estado": "Vigente",
+    "creacion": "Estela Feb 7, 2026 10:14 AM",
+    "creacion_iso": "2026-02-07T10:14:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11214433804",
+    "evento": "12.00HS en General Paz 937 con Julio Tamburelli 2494672857",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-09T12:00:00",
+    "ubicacion": "General Paz 937, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Julio Tamburelli",
+    "telefono": "2494672857",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 7, 2026 11:39 AM",
+    "creacion_iso": "2026-02-07T11:39:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11214484429",
+    "evento": "13.00HS en Fernandez de la Cruz 828 con Julio Tamburelli 2494672857",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-09T13:00:00",
+    "ubicacion": "Fernandez de la Cruz 828, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Julio Tamburelli",
+    "telefono": "2494672857",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 7, 2026 11:54 AM",
+    "creacion_iso": "2026-02-07T11:54:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11223807166",
+    "evento": "14.00HS en Saavedra 664 con Patricio Canevari",
+    "persona": "Santiago Favre, Gustavo",
+    "fecha": "2026-02-09T14:00:00",
+    "ubicacion": "Saavedra 664, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Alquilar",
+    "contacto": "Patricio Canevari",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Estela Feb 9, 2026 10:10 AM",
+    "creacion_iso": "2026-02-09T10:10:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11226195526",
+    "evento": "16.00HS en Maipú 227 con SOFIA 5492915061597",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-09T16:00:00",
+    "ubicacion": "Maipú 227, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Alquilar",
+    "contacto": "SOFIA",
+    "telefono": "5492915061597",
+    "estado": "Vigente",
+    "creacion": "Claudia Conte Feb 9, 2026 1:03 PM",
+    "creacion_iso": "2026-02-09T13:03:00",
+    "creado_por": "Claudia"
+  },
+  {
+    "id": "11228392349",
+    "evento": "11.00HS en Italia con AOMA",
+    "persona": "Gustavo",
+    "fecha": "2026-02-10T11:00:00",
+    "ubicacion": "Italia, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Alquilar",
+    "contacto": "AOMA",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 9, 2026 3:37 PM",
+    "creacion_iso": "2026-02-09T15:37:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11229207426",
+    "evento": "13.00HS en Primero de Mayo 1228 con Santiago Romero 5492494499857",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-10T13:00:00",
+    "ubicacion": "Primero de Mayo 1228, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Santiago Romero",
+    "telefono": "5492494499857",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 9, 2026 4:42 PM",
+    "creacion_iso": "2026-02-09T16:42:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11236521743",
+    "evento": "13.30HS en Lamadrid 486 con Franco Bellavite 5491136824646",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-11T13:30:00",
+    "ubicacion": "Lamadrid 486, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 10, 2026 11:01 AM",
+    "creacion_iso": "2026-02-10T11:01:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11237879594",
+    "evento": "14.00HS en Lobería 1664 con Franco Bellavitte 1136824646",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-11T14:00:00",
+    "ubicacion": "Lobería 1664, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Franco Bellavitte",
+    "telefono": "1136824646",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 10, 2026 12:36 PM",
+    "creacion_iso": "2026-02-10T12:36:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11238472934",
+    "evento": "12.00HS en Escribania Daguzan - Badillo-Ayerdi con Roberto Cardinale 5492494633217",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-27T12:00:00",
+    "ubicacion": "Escribania Daguzan - Badillo-Ayerdi, Hipólito Yrigoyen, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Roberto Cardinale",
+    "telefono": "5492494633217",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 10, 2026 1:15 PM",
+    "creacion_iso": "2026-02-10T13:15:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11238979124",
+    "evento": "09.30HS en Escribania Daguzan - Badillo-Ayerdi con Santiago Favre 2494307220",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-11T09:30:00",
+    "ubicacion": "Escribania Daguzan - Badillo-Ayerdi, Hipólito Yrigoyen, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Santiago Favre",
+    "telefono": "2494307220",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 10, 2026 1:50 PM",
+    "creacion_iso": "2026-02-10T13:50:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11239009528",
+    "evento": "12.40HS en 1 de Mayo 1228 con Franco Bellavitte 1136824646",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-11T12:40:00",
+    "ubicacion": "1 de Mayo 1228, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Franco Bellavitte",
+    "telefono": "1136824646",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 10, 2026 1:52 PM",
+    "creacion_iso": "2026-02-10T13:52:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11241764430",
+    "evento": "13.00HS en Hipólito Yrigoyen 910 con GONZALO AMAT 5492983567200",
+    "persona": "Gustavo",
+    "fecha": "2026-02-11T13:00:00",
+    "ubicacion": "Hipólito Yrigoyen 910, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "GONZALO AMAT",
+    "telefono": "5492983567200",
+    "estado": "Vigente",
+    "creacion": "Claudia Conte Feb 10, 2026 4:58 PM",
+    "creacion_iso": "2026-02-10T16:58:00",
+    "creado_por": "Claudia"
+  },
+  {
+    "id": "11248086342",
+    "evento": "10.30HS en Escribanía Speroni y García con Escribania Speroni y Garcia",
+    "persona": "Gustavo",
+    "fecha": "2026-02-12T10:30:00",
+    "ubicacion": "Escribanía Speroni y García, Belgrano, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Escribania Speroni y Garcia",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 11, 2026 11:01 AM",
+    "creacion_iso": "2026-02-11T11:01:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11248111379",
+    "evento": "10.30HS en Escribania Lorea con Escribania Lorea",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-18T10:30:00",
+    "ubicacion": "Escribania Lorea, José Hernández, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Escribania Lorea",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 11, 2026 11:03 AM",
+    "creacion_iso": "2026-02-11T11:03:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11248328844",
+    "evento": "12.00HS en Leandro Alem 1208 con Esteban Morales 5492494549936",
+    "persona": "",
+    "fecha": "2026-02-18T12:00:00",
+    "ubicacion": "Leandro Alem 1208, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Esteban Morales",
+    "telefono": "5492494549936",
+    "estado": "Vigente",
+    "creacion": "Santiago Favre Feb 11, 2026 11:21 AM",
+    "creacion_iso": "2026-02-11T11:21:00",
+    "creado_por": "Santiago"
+  },
+  {
+    "id": "11248397878",
+    "evento": "13.15HS en Hipólito Yrigoyen 910 con Perez Larriestre",
+    "persona": "Gustavo",
+    "fecha": "2026-02-11T13:15:00",
+    "ubicacion": "Hipólito Yrigoyen 910, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Perez Larriestre",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 11, 2026 11:25 AM",
+    "creacion_iso": "2026-02-11T11:25:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11251412655",
+    "evento": "15.30HS en Uriburu 1535 con Francis Zumpano 5492494475908",
+    "persona": "Gustavo",
+    "fecha": "2026-02-18T15:30:00",
+    "ubicacion": "Uriburu 1535, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Tasacion",
+    "contacto": "Francis Zumpano",
+    "telefono": "5492494475908",
+    "estado": "Vigente",
+    "creacion": "Claudia Conte Feb 11, 2026 3:05 PM",
+    "creacion_iso": "2026-02-11T15:05:00",
+    "creado_por": "Claudia"
+  },
+  {
+    "id": "11251738302",
+    "evento": "04.10HS en Belgrano 369 con Emma Mañaricua 5492494550155",
+    "persona": "Gustavo",
+    "fecha": "2026-02-11T04:10:00",
+    "ubicacion": "Belgrano 369, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Alquilar",
+    "contacto": "Emma Mañaricua",
+    "telefono": "5492494550155",
+    "estado": "Vigente",
+    "creacion": "Estela Feb 11, 2026 3:37 PM",
+    "creacion_iso": "2026-02-11T15:37:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11251789600",
+    "evento": "15.00HS en Fuerte Independencia 98 con Silvia Miralles 5492494531907",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-18T15:00:00",
+    "ubicacion": "Fuerte Independencia 98, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Silvia Miralles",
+    "telefono": "5492494531907",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 11, 2026 3:41 PM",
+    "creacion_iso": "2026-02-11T15:41:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11251844924",
+    "evento": "10.30HS en 4 de Abril 200 con Natalia Sforza 5492494629755",
+    "persona": "Gustavo",
+    "fecha": "2026-02-14T10:30:00",
+    "ubicacion": "4 de Abril 200, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Natalia Sforza",
+    "telefono": "5492494629755",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 11, 2026 3:45 PM",
+    "creacion_iso": "2026-02-11T15:45:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11252052524",
+    "evento": "13.00HS en General Rodríguez 820 con Laila Mendez 5492257613135",
+    "persona": "Gustavo",
+    "fecha": "2026-02-12T13:00:00",
+    "ubicacion": "General Rodríguez 820, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "",
+    "contacto": "Laila Mendez",
+    "telefono": "5492257613135",
+    "estado": "Vigente",
+    "creacion": "Santiago Favre Feb 11, 2026 4:06 PM",
+    "creacion_iso": "2026-02-11T16:06:00",
+    "creado_por": "Santiago"
+  },
+  {
+    "id": "11270098134",
+    "evento": "00.00HS en Richieri & Chile con Agustin Muzzi",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-18T00:00:00",
+    "ubicacion": "Richieri &amp; Chile, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "",
+    "contacto": "Agustin Muzzi",
+    "telefono": "",
+    "estado": "Error",
+    "creacion": "Estela Feb 13, 2026 11:23 AM",
+    "creacion_iso": "2026-02-13T11:23:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11304365898",
+    "evento": "15.00HS en Fuerte Independencia 98 con",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-18T15:00:00",
+    "ubicacion": "Fuerte Independencia 98, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "",
+    "telefono": "",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 18, 2026 11:05 AM",
+    "creacion_iso": "2026-02-18T11:05:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11304376438",
+    "evento": "15.10HS en Fuerte Independencia 98 con Inmobiliaria Medina 2494338514",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-18T15:10:00",
+    "ubicacion": "Fuerte Independencia 98, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Venta",
+    "contacto": "Inmobiliaria Medina",
+    "telefono": "2494338514",
+    "estado": "Vigente",
+    "creacion": "Juan Martin Fernandez Feb 18, 2026 11:07 AM",
+    "creacion_iso": "2026-02-18T11:07:00",
+    "creado_por": "Juan"
+  },
+  {
+    "id": "11305318941",
+    "evento": "09.30HS en Quinta Los Boxer con Matias Sforza 5492494640138",
+    "persona": "Gustavo",
+    "fecha": "2026-02-19T09:30:00",
+    "ubicacion": "Quinta Los Boxer, Aeronautica Argentina, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Tasacion",
+    "contacto": "Matias Sforza",
+    "telefono": "5492494640138",
+    "estado": "Vigente",
+    "creacion": "Estela Feb 18, 2026 12:20 PM",
+    "creacion_iso": "2026-02-18T12:20:00",
+    "creado_por": "Estela"
+  },
+  {
+    "id": "11307678511",
+    "evento": "09.00HS en General Rodríguez 820 con Emilse Villaroel 5492494541083",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-19T09:00:00",
+    "ubicacion": "General Rodríguez 820, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Alquilar",
+    "contacto": "Emilse Villaroel",
+    "telefono": "5492494541083",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 18, 2026 2:51 PM",
+    "creacion_iso": "2026-02-18T14:51:00",
+    "creado_por": "Gustavo"
+  },
+  {
+    "id": "11307713085",
+    "evento": "11.30HS en Sarmiento 900 con Martin Urraco 5492494547098",
+    "persona": "Santiago Favre",
+    "fecha": "2026-02-19T11:30:00",
+    "ubicacion": "Sarmiento 900, Tandil, Provincia de Buenos Aires, Argentina",
+    "objetivo": "Reunion",
+    "contacto": "Martin Urraco",
+    "telefono": "5492494547098",
+    "estado": "Vigente",
+    "creacion": "Gustavo Feb 18, 2026 2:55 PM",
+    "creacion_iso": "2026-02-18T14:55:00",
+    "creado_por": "Gustavo"
+  }
+];
+
+const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
+const FRANJAS={'manana':{label:'Mañana · 7 a 12',min:7,max:12},'mediodia':{label:'Mediodía · 12 a 15',min:12,max:15},'tarde':{label:'Tarde · 15 en adelante',min:15,max:24}};
+
+let DATA=[];
+let F={persona:new Set(),objetivo:new Set(),franja:new Set(),dia:'',texto:'',orden:'fecha-asc'};
+let panelAbierto=null;
+
+const $=s=>document.querySelector(s);
+function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',2800);}
+
+function fmtTime(iso){const d=new Date(iso);if(isNaN(d))return'--';return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function dayKey(iso){const d=new Date(iso);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayLabel(iso){const d=new Date(iso);const hoy=new Date();const ma=new Date();ma.setDate(hoy.getDate()+1);
+  if(dayKey(iso)===dayKey(hoy))return'Hoy';if(dayKey(iso)===dayKey(ma))return'Mañana';
+  return d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});}
+function isToday(iso){return dayKey(iso)===dayKey(new Date());}
+function fmtCrea(iso){if(!iso)return'';const d=new Date(iso);if(isNaN(d))return'';return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});}
+
+function personas(){const s=new Set();DATA.forEach(d=>(d.persona||'').split(',').forEach(p=>{p=p.trim();if(p)s.add(p);}));return[...s].sort();}
+function objetivos(){const s=new Set();DATA.forEach(d=>{if(d.objetivo)s.add(d.objetivo);});return[...s].sort();}
+
+function mapURL(d){
+  // Si hay coordenadas reales de Monday, usar el pin exacto
+  if(d.lat&&d.lng)return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.lat+','+d.lng);
+  // Si no, buscar por dirección de texto
+  return d.ubicacion?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.ubicacion):'';
+}
+
+/* -------- PANEL DE FILTROS -------- */
+function togglePanel(tipo){
+  if(panelAbierto===tipo){cerrarPanel();return;}
+  panelAbierto=tipo;
+  document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('open'));
+  $('#tg'+cap(tipo)).classList.add('open');
+  $('#panel').classList.add('open');
+  $('#panelInner').innerHTML=panelHTML(tipo);
+}
+function cerrarPanel(){panelAbierto=null;$('#panel').classList.remove('open');document.querySelectorAll('.fbtn').forEach(b=>b.classList.remove('open'));}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+function panelHTML(tipo){
+  if(tipo==='persona'){
+    return sec('Filtrar por persona',personas().map(p=>opt(p,F.persona.has(p),`toggleSet('persona','${esc(p).replace(/'/g,"\\'")}')`)).join(''));
+  }
+  if(tipo==='objetivo'){
+    return sec('Filtrar por objetivo',objetivos().map(o=>opt(o,F.objetivo.has(o),`toggleSet('objetivo','${esc(o)}')`,'obj-'+(OBJ_MAP[o]||'otro'))).join(''));
+  }
+  if(tipo==='franja'){
+    return sec('Franja horaria',Object.keys(FRANJAS).map(k=>opt(FRANJAS[k].label,F.franja.has(k),`toggleSet('franja','${k}')`)).join(''));
+  }
+  if(tipo==='fecha'){
+    return sec('Día de la cita',
+      `<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="date" class="dateinput" id="diaInput" value="${F.dia}" onchange="setDia(this.value)">
+        ${F.dia?`<button class="opt sel" onclick="setDia('')">Quitar ✕</button>`:''}
+      </div>`);
+  }
+  if(tipo==='orden'){
+    const ords=[['fecha-asc','Cita: más próxima primero'],['fecha-desc','Cita: más lejana primero'],['crea-desc','Creación: más reciente'],['crea-asc','Creación: más antigua'],['contacto','Contacto (A-Z)']];
+    return sec('Ordenar por',ords.map(([v,l])=>opt(l,F.orden===v,`setOrden('${v}')`)).join(''));
+  }
+  return'';
+}
+function sec(title,inner){return`<div class="panel-sec"><h4>${title}</h4><div class="opts">${inner}</div></div>`;}
+function opt(label,sel,onclick,extra){return`<button class="opt ${extra||''} ${sel?'sel':''}" onclick="${onclick}">${label}</button>`;}
+
+function toggleSet(grupo,val){F[grupo].has(val)?F[grupo].delete(val):F[grupo].add(val);refreshUI();$('#panelInner').innerHTML=panelHTML(panelAbierto);}
+function setDia(v){F.dia=v;refreshUI();if(panelAbierto==='fecha')$('#panelInner').innerHTML=panelHTML('fecha');}
+function setOrden(v){F.orden=v;refreshUI();$('#panelInner').innerHTML=panelHTML('orden');}
+function onSearch(v){F.texto=v.toLowerCase().trim();$('#searchClear').className='search-clear'+(v?' show':'');refreshUI();}
+function clearSearch(){$('#search').value='';F.texto='';$('#searchClear').className='search-clear';refreshUI();}
+function clearAll(){F={persona:new Set(),objetivo:new Set(),franja:new Set(),dia:'',texto:'',orden:'fecha-asc'};$('#search').value='';$('#searchClear').className='search-clear';cerrarPanel();refreshUI();}
+
+function refreshUI(){
+  badge('Persona',F.persona.size);badge('Objetivo',F.objetivo.size);badge('Franja',F.franja.size);
+  setOn('tgPersona',F.persona.size);setOn('tgObjetivo',F.objetivo.size);setOn('tgFranja',F.franja.size);
+  setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
+  const activo=F.persona.size||F.objetivo.size||F.franja.size||F.dia||F.texto||F.orden!=='fecha-asc';
+  $('#clearAll').className='clear-all'+(activo?' show':'');
+  render();
+}
+function badge(name,n){const b=$('#b'+name);if(n>0){b.textContent=n;b.style.display='flex';}else b.style.display='none';}
+function setOn(id,cond){$('#'+id).classList.toggle('on',!!cond);}
+
+/* -------- APLICAR FILTROS -------- */
+function filtrar(){
+  return DATA.filter(d=>{
+    if(!d.fecha)return false;
+    if(F.persona.size && ![...F.persona].some(p=>(d.persona||'').includes(p)))return false;
+    if(F.objetivo.size && !F.objetivo.has(d.objetivo))return false;
+    if(F.dia && dayKey(d.fecha)!==F.dia)return false;
+    if(F.franja.size){const h=new Date(d.fecha).getHours();
+      if(![...F.franja].some(k=>h>=FRANJAS[k].min && h<FRANJAS[k].max))return false;}
+    if(F.texto){const blob=(d.evento+' '+d.contacto+' '+d.ubicacion+' '+d.persona+' '+d.objetivo).toLowerCase();
+      if(!blob.includes(F.texto))return false;}
+    return true;
+  });
+}
+function ordenar(items){
+  const c=[...items];
+  switch(F.orden){
+    case'fecha-desc':c.sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));break;
+    case'crea-desc':c.sort((a,b)=>new Date(b.creacion_iso||0)-new Date(a.creacion_iso||0));break;
+    case'crea-asc':c.sort((a,b)=>new Date(a.creacion_iso||0)-new Date(b.creacion_iso||0));break;
+    case'contacto':c.sort((a,b)=>(a.contacto||'').localeCompare(b.contacto||''));break;
+    default:c.sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+  }
+  return c;
+}
+
+function iconLoc(){return'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';}
+function iconUser(){return'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';}
+function iconWa(){return'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.2s-.7.9-.9 1.1c-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15l-1.3 4.7L7 20.4A10 10 0 1 0 12 2z"/></svg>';}
+function iconMap(){return iconLoc();}
+
+function render(){
+  const main=$('#main');
+  let items=ordenar(filtrar());
+  $('#subCount').innerHTML=`<b>${items.length}</b> cita${items.length!==1?'s':''}`;
+  if(!items.length){main.innerHTML='<div class="empty"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><p>No hay citas con estos filtros</p></div>';return;}
+
+  const ordenCronologico=(F.orden==='fecha-asc'||F.orden==='fecha-desc');
+  let html='',delay=0;
+  if(ordenCronologico){
+    const groups={};items.forEach(d=>{const k=dayKey(d.fecha);(groups[k]=groups[k]||[]).push(d);});
+    const keys=Object.keys(groups).sort((a,b)=>new Date(groups[a][0].fecha)-new Date(groups[b][0].fecha));
+    if(F.orden==='fecha-desc')keys.reverse();
+    keys.forEach(k=>{const arr=groups[k];
+      html+=`<div class="day-group"><div class="day-head"><span class="day-label ${isToday(arr[0].fecha)?'is-today':''}">${dayLabel(arr[0].fecha)}</span><span class="day-line"></span><span class="day-count">${arr.length}</span></div>`;
+      arr.forEach(d=>{html+=cardHTML(d,delay);delay+=30;});html+='</div>';});
+  }else{
+    html+='<div class="day-group">';items.forEach(d=>{html+=cardHTML(d,delay);delay+=30;});html+='</div>';
+  }
+  main.innerHTML=html;
+}
+function cardHTML(d,delay){
+  const cls=OBJ_MAP[d.objetivo]||'otro';
+  const tel=(d.telefono||'').replace(/\D/g,'');
+  const waLink=tel?`https://wa.me/${tel.length<=10?'54'+tel:tel}`:'';
+  const mLink=mapURL(d);
+  const pers=(d.persona||'').split(',').map(p=>p.trim()).filter(Boolean);
+  const showFecha=(F.orden==='crea-desc'||F.orden==='crea-asc'||F.orden==='contacto');
+  return`<div class="card t-${cls}" style="animation-delay:${delay}ms">
+    <div class="c-top"><div class="c-time">${fmtTime(d.fecha)}${showFecha?` <span style="font-size:12px;color:var(--muted);font-weight:600">· ${new Date(d.fecha).toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span>`:''}</div>
+      ${d.objetivo?`<span class="c-tag ${cls}">${esc(d.objetivo)}</span>`:''}</div>
+    <div class="c-title">${esc(d.evento)||'(sin título)'}</div>
+    <div class="c-meta">
+      ${d.contacto?`<div class="c-row">${iconUser()}<b>${esc(d.contacto)}</b></div>`:''}
+      ${d.ubicacion?`<div class="c-row">${iconLoc()}<span>${esc(d.ubicacion)}</span></div>`:''}
+      ${pers.length?`<div class="person-badges">${pers.map(p=>`<span class="pb">${esc(p)}</span>`).join('')}</div>`:''}
+    </div>
+    <div class="c-actions">
+      <a class="act wa ${waLink?'':'disabled'}" ${waLink?`href="${waLink}" target="_blank" rel="noopener"`:''}>${iconWa()}WhatsApp</a>
+      <a class="act map ${mLink?'':'disabled'}" ${mLink?`href="${mLink}" target="_blank" rel="noopener"`:''}>${iconMap()}Mapa</a>
+    </div>
+    ${d.creacion_iso?`<div class="c-foot">Creado ${d.creado_por?'por '+esc(d.creado_por)+' ':''}el ${fmtCrea(d.creacion_iso)}</div>`:''}
+  </div>`;
+}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+async function cargar(){
+  const btn=$('#refreshBtn');btn.classList.add('loading');
+  if(!WEBHOOK_URL){
+    DATA=DEMO;$('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
+    refreshUI();btn.classList.remove('loading');toast('Modo demo — pegá tu webhook de Make para datos reales');return;
+  }
+  try{
+    const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar',token:API_TOKEN})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const json=await res.json();
+    DATA=Array.isArray(json)?json:(json.items||json.data||[]);
+    $('#statusPill').className='status-pill live';$('#statusTxt').textContent='En vivo';
+    refreshUI();toast('Agenda actualizada');
+  }catch(e){
+    DATA=DEMO;$('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
+    refreshUI();toast('No se pudo conectar a Make — mostrando demo',true);
+  }finally{btn.classList.remove('loading');}
+}
+cargar();
+</script>
+</body>
+</html>
