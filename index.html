@@ -141,41 +141,79 @@ main{padding:16px 14px}
 .tab svg{width:16px;height:16px}
 .tab.on{color:var(--red);border-bottom-color:var(--red)}
 
-/* ---- Vista calendario ---- */
-.cal-wrap{padding:16px 14px}
-.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 4px}
-.cal-month{font-size:17px;font-weight:800;color:var(--ink);text-transform:capitalize}
-.cal-nav{display:flex;gap:8px}
-.cal-nav button{width:36px;height:36px;border-radius:10px;border:1.5px solid var(--line2);background:var(--paper);
-  color:var(--ink2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+/* ---- Vista calendario estilo Notion ---- */
+.cal-wrap{padding:14px 10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding:0 6px}
+.cal-month{font-size:18px;font-weight:800;color:var(--ink);text-transform:capitalize}
+.cal-nav{display:flex;gap:6px}
+.cal-nav button{height:34px;min-width:34px;padding:0 10px;border-radius:9px;border:1.5px solid var(--line2);background:var(--paper);
+  color:var(--ink2);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
 .cal-nav button:active{transform:scale(.92);background:var(--paper3)}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.cal-dow{text-align:center;font-size:11px;font-weight:700;color:var(--faint);text-transform:uppercase;padding-bottom:6px}
-.cal-cell{aspect-ratio:1;border-radius:11px;border:1.5px solid transparent;background:var(--paper);
-  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:6px;
-  cursor:pointer;position:relative;transition:.14s;min-height:0}
-.cal-cell.empty{background:none;cursor:default}
-.cal-cell:not(.empty):hover{border-color:var(--line2)}
-.cal-cell .num{font-size:14px;font-weight:700;color:var(--ink2);line-height:1}
-.cal-cell.today .num{color:var(--red)}
-.cal-cell.today{border-color:var(--red-soft);background:var(--red-soft)}
-.cal-cell.sel{background:var(--ink);border-color:var(--ink)}
-.cal-cell.sel .num{color:#fff}
-.cal-dots{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap;justify-content:center;max-width:90%}
-.cal-dot{width:6px;height:6px;border-radius:50%;background:var(--otro)}
-.cal-dot.reunion{background:var(--reunion)}.cal-dot.venta{background:var(--venta)}
-.cal-dot.alquilar{background:var(--alquilar)}.cal-dot.tasacion{background:var(--tasacion)}.cal-dot.turno{background:var(--turno)}
-.cal-cell.sel .cal-dot{background:#fff!important}
-.cal-more{font-size:9px;font-weight:700;color:var(--muted);margin-top:2px}
-.cal-cell.sel .cal-more{color:#fff}
+.cal-nav .hoy{font-size:12px}
 
-.cal-day-detail{margin-top:20px}
-.cal-day-title{font-size:14px;font-weight:800;color:var(--ink);text-transform:capitalize;margin-bottom:12px;padding:0 4px;
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cal-dow{text-align:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;
+  padding:7px 0;background:var(--paper2)}
+.cal-cell{background:var(--paper);min-height:74px;padding:4px 4px 5px;cursor:pointer;position:relative;transition:.12s;display:flex;flex-direction:column;gap:2px}
+.cal-cell.empty{background:var(--paper2);cursor:default}
+.cal-cell:not(.empty):active{background:var(--paper2)}
+.cal-cell .num{font-size:12px;font-weight:700;color:var(--ink2);width:21px;height:21px;display:flex;align-items:center;justify-content:center;border-radius:50%;align-self:flex-start}
+.cal-cell.today .num{background:var(--red);color:#fff}
+.cal-cell.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.cal-evs{display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.cal-ev{font-size:9.5px;font-weight:600;line-height:1.25;padding:2px 4px;border-radius:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  background:var(--paper3);color:var(--ink2);border-left:2.5px solid var(--otro)}
+.cal-ev.reunion{border-left-color:var(--reunion);background:#eef4fd;color:#1a4a9c}
+.cal-ev.venta{border-left-color:var(--venta);background:#e9f7ef;color:#15784a}
+.cal-ev.alquilar{border-left-color:var(--alquilar);background:#fdf2e3;color:#9a5a06}
+.cal-ev.tasacion{border-left-color:var(--tasacion);background:#f5ecfc;color:#6a2a9c}
+.cal-ev.turno{border-left-color:var(--turno);background:#fcecf2;color:#9c1248}
+.cal-ev .h{font-weight:800;margin-right:3px}
+.cal-more{font-size:9px;font-weight:700;color:var(--muted);padding:0 4px}
+
+.cal-day-detail{margin-top:22px;padding:0 4px}
+.cal-day-title{font-size:14px;font-weight:800;color:var(--ink);text-transform:capitalize;margin-bottom:12px;
   display:flex;align-items:center;gap:8px}
 .cal-day-title .badge-n{background:var(--red);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;
   border-radius:10px;display:flex;align-items:center;justify-content:center;padding:0 6px}
-.cal-empty-day{text-align:center;padding:30px 20px;color:var(--muted);font-size:14px}
+.cal-day-title .add-day{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:12px;font-weight:700;
+  color:#fff;background:var(--red);border:none;padding:7px 12px;border-radius:9px;cursor:pointer;transition:.15s}
+.cal-day-title .add-day:active{transform:scale(.95)}
+.cal-day-title .add-day svg{width:14px;height:14px}
+.cal-empty-day{text-align:center;padding:24px 20px;color:var(--muted);font-size:14px}
 .hidden{display:none!important}
+
+/* ---- Modal formulario nueva cita ---- */
+.modal-bg{position:fixed;inset:0;background:rgba(10,10,10,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:.25s;backdrop-filter:blur(2px)}
+.modal-bg.show{opacity:1;pointer-events:auto}
+.modal{background:var(--paper);width:100%;max-width:520px;border-radius:20px 20px 0 0;max-height:92vh;overflow-y:auto;
+  transform:translateY(100%);transition:.3s cubic-bezier(.2,.8,.2,1);padding:8px 18px 24px}
+.modal-bg.show .modal{transform:translateY(0)}
+.modal-grip{width:40px;height:4px;background:var(--line2);border-radius:3px;margin:8px auto 14px}
+.modal h3{font-size:18px;font-weight:800;color:var(--ink);margin-bottom:4px}
+.modal .msub{font-size:13px;color:var(--muted);margin-bottom:18px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--ink2);margin-bottom:6px}
+.field label .opt{color:var(--faint);font-weight:500}
+.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line2);border-radius:10px;padding:11px 12px;
+  font-family:'Archivo';font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:.15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red)}
+.field textarea{resize:vertical;min-height:60px}
+.field-row{display:flex;gap:10px}.field-row .field{flex:1}
+.obj-pick{display:flex;flex-wrap:wrap;gap:7px}
+.obj-pick .op{font-size:13px;font-weight:600;padding:8px 13px;border-radius:30px;background:var(--paper);
+  border:1.5px solid var(--line2);color:var(--ink2);cursor:pointer;transition:.15s}
+.obj-pick .op.sel{background:var(--red);color:#fff;border-color:var(--red)}
+.modal-actions{display:flex;gap:10px;margin-top:20px}
+.modal-actions button{flex:1;padding:13px;border-radius:11px;font-family:'Archivo';font-size:14px;font-weight:700;cursor:pointer;transition:.15s}
+.btn-cancel{background:var(--paper3);border:none;color:var(--ink2)}
+.btn-save{background:var(--red);border:none;color:#fff}
+.btn-save:disabled{opacity:.5;pointer-events:none}
+.btn-save.sending{pointer-events:none}
+.btn-save.sending::after{content:"";display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;margin-left:8px;vertical-align:-2px;animation:sp .7s linear infinite}
+.modal-actions button:active{transform:scale(.97)}
 </style>
 </head>
 <body>
@@ -223,20 +261,39 @@ main{padding:16px 14px}
 </button>
 <div class="toast" id="toast"></div>
 
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)cerrarModal()">
+  <div class="modal">
+    <div class="modal-grip"></div>
+    <h3>Nueva cita</h3>
+    <div class="msub" id="modalFecha"></div>
+    <div class="field">
+      <label>Evento / título</label>
+      <input id="fEvento" placeholder="Ej: 10.00HS visita con Juan Pérez">
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Fecha</label><input type="date" id="fFecha"></div>
+      <div class="field"><label>Hora</label><input type="time" id="fHora"></div>
+    </div>
+    <div class="field">
+      <label>Objetivo</label>
+      <div class="obj-pick" id="fObjetivo"></div>
+    </div>
+    <div class="field"><label>Persona <span class="opt">(quién atiende)</span></label><input id="fPersona" placeholder="Ej: Santiago Favre"></div>
+    <div class="field"><label>Contacto <span class="opt">(cliente)</span></label><input id="fContacto" placeholder="Nombre del cliente"></div>
+    <div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input id="fTelefono" inputmode="tel" placeholder="Ej: 2494123456"></div>
+    <div class="field"><label>Ubicación <span class="opt">(opcional)</span></label><input id="fUbicacion" placeholder="Dirección"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-save" id="btnSave" onclick="enviarCita()">Guardar cita</button>
+    </div>
+  </div>
+</div>
+
 <script>
-/* ============================================================
-   CONFIG  —  completá estos dos valores
-   ============================================================
-   WEBHOOK_URL : la URL del Custom Webhook de Make.
-   API_TOKEN   : una clave que vos inventás (ej: "favre-2026-xY7k").
-                 Tiene que ser EXACTAMENTE la misma que pongas
-                 en el filtro de validación dentro de Make.
-   Mientras WEBHOOK_URL esté vacío, la app usa los datos de DEMO.
-   Nota: al ser una página pública, el token queda visible en el
-   código. Sirve para revocar/rotar acceso, no como secreto fuerte.
-*/
+
 const WEBHOOK_URL = "https://hook.us1.make.com/q67odesdv4mkrftpc7kwjdlfmku6wjem";   // <--- pegá tu URL de Make aquí
-const API_TOKEN   = "test";   // <--- pegá tu token (igual al de Make)
+const API_TOKEN   = "TestFavre-0506";   // <--- pegá tu token (igual al de Make)
+const WEBHOOK_CREAR = "https://hook.us1.make.com/ttal396rhyg6qcjpsmqcwybk8su5o6qs"; // <--- URL del webhook de Make para CREAR citas (la completás después)
 
 const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
 const FRANJAS={'manana':{label:'Mañana · 7 a 12',min:7,max:12},'mediodia':{label:'Mediodía · 12 a 15',min:12,max:15},'tarde':{label:'Tarde · 15 en adelante',min:15,max:24}};
@@ -417,22 +474,27 @@ function renderCalendario(){
 
   let html=`<div class="cal-head">
     <div class="cal-month">${mesNombre}</div>
-    <div class="cal-nav"><button onclick="calMes(-1)">‹</button><button onclick="irHoy()">●</button><button onclick="calMes(1)">›</button></div>
+    <div class="cal-nav"><button onclick="calMes(-1)">‹</button><button class="hoy" onclick="irHoy()">Hoy</button><button onclick="calMes(1)">›</button></div>
   </div><div class="cal-grid">`;
   dows.forEach(d=>html+=`<div class="cal-dow">${d}</div>`);
   for(let i=0;i<inicioSemana;i++)html+='<div class="cal-cell empty"></div>';
   for(let dia=1;dia<=diasMes;dia++){
     const k=y+'-'+String(m+1).padStart(2,'0')+'-'+String(dia).padStart(2,'0');
-    const citas=map[k]||[];
+    const citas=(map[k]||[]).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
     const cls=['cal-cell'];
     if(k===hoyK)cls.push('today');
     if(k===calSel)cls.push('sel');
-    let dots='';
-    const tipos=[...new Set(citas.map(c=>OBJ_MAP[c.objetivo]||'otro'))].slice(0,4);
-    tipos.forEach(t=>dots+=`<span class="cal-dot ${t}"></span>`);
+    let evs='';
+    const visibles=citas.slice(0,2);
+    visibles.forEach(c=>{
+      const t=OBJ_MAP[c.objetivo]||'otro';
+      const titulo=esc((c.contacto||c.evento||'').slice(0,22));
+      evs+=`<div class="cal-ev ${t}"><span class="h">${fmtTime(c.fecha)}</span>${titulo}</div>`;
+    });
+    const resto=citas.length-visibles.length;
     html+=`<div class="${cls.join(' ')}" onclick="selDia('${k}')">
       <span class="num">${dia}</span>
-      ${citas.length?`<div class="cal-dots">${dots}</div>${citas.length>4?`<span class="cal-more">+${citas.length}</span>`:''}`:''}
+      ${citas.length?`<div class="cal-evs">${evs}</div>${resto>0?`<span class="cal-more">+${resto} más</span>`:''}`:''}
     </div>`;
   }
   html+='</div>';
@@ -449,10 +511,75 @@ function renderDetalleDia(){
   const map=citasPorDia();
   const citas=(map[calSel]||[]).sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
   const fechaTxt=new Date(calSel+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-  let html=`<div class="cal-day-title">${fechaTxt}${citas.length?`<span class="badge-n">${citas.length}</span>`:''}</div>`;
+  let html=`<div class="cal-day-title">${fechaTxt}${citas.length?`<span class="badge-n">${citas.length}</span>`:''}<button class="add-day" onclick="abrirModal('${calSel}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Agregar</button></div>`;
   if(!citas.length){html+='<div class="cal-empty-day">Sin citas este día</div>';}
   else{let delay=0;citas.forEach(d=>{html+=cardHTML(d,delay);delay+=30;});}
   det.innerHTML=html;
+}
+
+/* -------- MODAL NUEVA CITA -------- */
+const OBJETIVOS_FORM=['Reunion','Venta','Alquilar','Tasacion','Turno','Recibir llaves'];
+let objSel='Reunion';
+
+function abrirModal(diaK){
+  // precargar fecha del día tocado
+  $('#fFecha').value=diaK||dayKey(new Date());
+  $('#fHora').value='10:00';
+  $('#fEvento').value='';$('#fPersona').value='';$('#fContacto').value='';$('#fTelefono').value='';$('#fUbicacion').value='';
+  objSel='Reunion';
+  $('#fObjetivo').innerHTML=OBJETIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
+  const ft=new Date((diaK||dayKey(new Date()))+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  $('#modalFecha').textContent='Para el '+ft;
+  $('#modalBg').classList.add('show');
+}
+function cerrarModal(){$('#modalBg').classList.remove('show');}
+function pickObj(o,el){objSel=o;document.querySelectorAll('#fObjetivo .op').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
+
+async function enviarCita(){
+  const evento=$('#fEvento').value.trim();
+  const fecha=$('#fFecha').value;
+  const hora=$('#fHora').value||'00:00';
+  if(!evento){toast('Poné un título para la cita',true);return;}
+  if(!fecha){toast('Elegí una fecha',true);return;}
+
+  const payload={
+    accion:'crear',
+    token:API_TOKEN,
+    evento:evento,
+    fecha:fecha+'T'+hora+':00',
+    objetivo:objSel,
+    persona:$('#fPersona').value.trim(),
+    contacto:$('#fContacto').value.trim(),
+    telefono:$('#fTelefono').value.trim(),
+    ubicacion:$('#fUbicacion').value.trim()
+  };
+
+  const btn=$('#btnSave');btn.classList.add('sending');btn.textContent='Guardando';
+
+  if(!WEBHOOK_CREAR){
+    // sin webhook configurado: lo agrega localmente como demostración
+    DATA.push({id:'local-'+Date.now(),evento:payload.evento,persona:payload.persona,fecha:payload.fecha,
+      ubicacion:payload.ubicacion,lat:'',lng:'',objetivo:payload.objetivo,contacto:payload.contacto,
+      telefono:payload.telefono,estado:'Vigente',creacion_iso:new Date().toISOString().slice(0,19),creado_por:''});
+    btn.classList.remove('sending');btn.textContent='Guardar cita';
+    cerrarModal();calSel=fecha;refreshUI();
+    toast('Cita agregada (local — falta configurar webhook de alta)');
+    return;
+  }
+
+  try{
+    const res=await fetch(WEBHOOK_CREAR,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    cerrarModal();
+    toast('Cita creada — actualizando agenda…');
+    calSel=fecha;
+    await cargar();           // recarga desde Monday
+    setVista('calendario');   // vuelve al calendario en el día creado
+  }catch(e){
+    toast('No se pudo crear la cita. Revisá el webhook.',true);
+  }finally{
+    btn.classList.remove('sending');btn.textContent='Guardar cita';
+  }
 }
 
 function render(){
