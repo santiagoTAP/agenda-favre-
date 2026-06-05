@@ -417,7 +417,6 @@ async function cargar(){
     if(!res.ok)throw new Error('HTTP '+res.status);
     
     let textoRespuesta = await res.text();
-    console.log("Respuesta cruda directa de Make:", textoRespuesta);
     
     // Procesamos la respuesta a través del desglosador inteligente
     let datosCargados = desglosarRespuestaMalformada(textoRespuesta);
