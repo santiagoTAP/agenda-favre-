@@ -230,6 +230,7 @@ function abrirModal(diaK){
   $('#fFecha').value=diaK||dayKey(new Date());
   $('#fHora').value='10:00';
   $('#fEvento').value='';$('#fPersona').value='';$('#fContacto').value='';$('#fTelefono').value='';$('#fUbicacion').value='';
+  if($('#fNotificar')) $('#fNotificar').checked=false;
   objSel='Reunion';
   $('#fObjetivo').innerHTML=OBJETIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
   const ft=new Date((diaK||dayKey(new Date()))+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
@@ -260,8 +261,10 @@ async function enviarCita(){
   if(!evento){toast('Poné un título para la cita',true);return;}
   if(!fecha){toast('Elegí una fecha',true);return;}
 
-  const matchContacto = CONTACTOS.find(c => c && c.name && c.name.toLowerCase() === nombreContacto.toLowerCase());
+  const norm = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const matchContacto = CONTACTOS.find(c => c && c.name && norm(c.name) === norm(nombreContacto));
   const contactoId = matchContacto ? matchContacto.id : '';
+  const notificar = $('#fNotificar') ? $('#fNotificar').checked : false;
 
   const payload={
     accion:'crear',
@@ -273,7 +276,9 @@ async function enviarCita(){
     contacto:nombreContacto,
     contacto_id:contactoId, 
     telefono:$('#fTelefono').value.trim(),
-    ubicacion:$('#fUbicacion').value.trim()
+    ubicacion:$('#fUbicacion').value.trim(),
+    notificar:notificar,
+    notificar_texto:notificar?'Si':'No'
   };
 
   const btn=$('#btnSave');btn.classList.add('sending');btn.textContent='Guardando';
@@ -346,15 +351,14 @@ function cardHTML(d,delay){
     ${d.creacion_iso?`<div class="c-foot">Creado ${d.creado_por?'por '+esc(d.creado_por)+' ':''}el ${fmtCrea(d.creacion_iso)}</div>`:''}
   </div>`;
 }
-function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':':','"' : '"'}[c]));}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
-// 🛡️ NUEVO MOTOR DE EXTRACCIÓN INTELIGENTE POR REGEX (Sana el JSON roto de Make en tiempo real)
+// 🛡️ MOTOR DE EXTRACCIÓN POR REGEX (sana el JSON roto de Make en tiempo real)
 function desglosarRespuestaMalformada(textoCrudo) {
   let agendaData = [];
   let contactosData = [];
   let texto = textoCrudo.trim();
 
-  // Limpiar envolturas externas de arrays que a veces genera Make
   if (texto.startsWith('[') && texto.endsWith(']')) {
     let interior = texto.slice(1, -1).trim();
     if (interior.includes('"agenda"')) {
@@ -362,12 +366,10 @@ function desglosarRespuestaMalformada(textoCrudo) {
     }
   }
 
-  // 1. Extraer bloque Agenda (Busca todo lo que esté entre "agenda": y ,"contactos":)
   const agendaRegex = /"agenda"\s*:\s*([\s\S]+?),\s*"contactos"\s*:/i;
   const agendaMatch = texto.match(agendaRegex);
   if (agendaMatch) {
     let agendaStr = agendaMatch[1].trim();
-    // Forzar envoltura de Array si viene suelto
     if (!agendaStr.startsWith('[')) agendaStr = '[' + agendaStr + ']';
     try {
       agendaStr = agendaStr.replace(/'/g, '"');
@@ -375,15 +377,12 @@ function desglosarRespuestaMalformada(textoCrudo) {
     } catch(e) { console.error("Fallo parseo secundario de agenda:", e); }
   }
 
-  // 2. Extraer bloque Contactos (Busca todo desde "contactos": hasta el final)
   const contactosRegex = /"contactos"\s*:\s*([\s\S]+)/i;
   const contactosMatch = texto.match(contactosRegex);
   if (contactosMatch) {
     let contactosStr = contactosMatch[1].trim();
-    // Remover llaves de cierre de objeto JSON base
     if (contactosStr.endsWith('}')) contactosStr = contactosStr.slice(0, -1).trim();
     if (contactosStr.endsWith(',')) contactosStr = contactosStr.slice(0, -1).trim();
-    // Forzar envoltura de Array si viene suelto
     if (!contactosStr.startsWith('[')) contactosStr = '[' + contactosStr + ']';
     try {
       contactosStr = contactosStr.replace(/'/g, '"');
@@ -391,7 +390,6 @@ function desglosarRespuestaMalformada(textoCrudo) {
     } catch(e) { console.error("Fallo parseo secundario de contactos:", e); }
   }
 
-  // Respaldo clásico si por milagro el JSON vino perfecto de origen
   if (!agendaMatch && !contactosMatch) {
     try {
       let json = JSON.parse(texto);
@@ -418,7 +416,6 @@ async function cargar(){
     
     let textoRespuesta = await res.text();
     
-    // Procesamos la respuesta a través del desglosador inteligente
     let datosCargados = desglosarRespuestaMalformada(textoRespuesta);
     
     DATA = datosCargados.agenda;
