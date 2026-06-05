@@ -231,12 +231,11 @@ function abrirModal(diaK){
   $('#fHora').value='10:00';
   $('#fEvento').value='';$('#fPersona').value='';$('#fContacto').value='';$('#fTelefono').value='';$('#fUbicacion').value='';
   objSel='Reunion';
-  $('#fObjetivo').innerHTML=OBEJTIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
+  $('#fObjetivo').innerHTML=OBJETIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
   const ft=new Date((diaK||dayKey(new Date()))+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
   $('#modalFecha').textContent='Para el '+ft;
   $('#modalBg').classList.add('show');
 }
-const OBEJTIVOS_FORM=OBJETIVOS_FORM; // Parche de seguridad por si cruza nombres
 
 function cerrarModal(){$('#modalBg').classList.remove('show');}
 function pickObj(o,el){objSel=o;document.querySelectorAll('#fObjetivo .op').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
@@ -347,66 +346,95 @@ function cardHTML(d,delay){
     ${d.creacion_iso?`<div class="c-foot">Creado ${d.creado_por?'por '+esc(d.creado_por)+' ':''}el ${fmtCrea(d.creacion_iso)}</div>`:''}
   </div>`;
 }
-function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':':','"' : '"'}[c]));}
 
-// Función encargada de limpiar strings JSON mal formados de Make/Monday antes del parseo
-function intentarParsearJSON(textoCrudo) {
-  let limpio = textoCrudo.trim();
-  try {
-    return JSON.parse(limpio);
-  } catch(e) {
-    // Si falla por comillas simples en las propiedades ({agenda: '...'}) las repara aquí
-    try {
-      limpio = limpio.replace(/([{,]\s*)([a-zA-Z0-9_]+)\s*:/g, '$1"$2":'); // Pone comillas dobles a las llaves
-      limpio = limpio.replace(/'/g, '"'); // Convierte comillas simples a dobles
-      return JSON.parse(limpio);
-    } catch(err) {
-      throw new Error("El JSON sigue dañado estructuralmente.");
+// 🛡️ NUEVO MOTOR DE EXTRACCIÓN INTELIGENTE POR REGEX (Sana el JSON roto de Make en tiempo real)
+function desglosarRespuestaMalformada(textoCrudo) {
+  let agendaData = [];
+  let contactosData = [];
+  let texto = textoCrudo.trim();
+
+  // Limpiar envolturas externas de arrays que a veces genera Make
+  if (texto.startsWith('[') && texto.endsWith(']')) {
+    let interior = texto.slice(1, -1).trim();
+    if (interior.includes('"agenda"')) {
+      texto = interior;
     }
   }
+
+  // 1. Extraer bloque Agenda (Busca todo lo que esté entre "agenda": y ,"contactos":)
+  const agendaRegex = /"agenda"\s*:\s*([\s\S]+?),\s*"contactos"\s*:/i;
+  const agendaMatch = texto.match(agendaRegex);
+  if (agendaMatch) {
+    let agendaStr = agendaMatch[1].trim();
+    // Forzar envoltura de Array si viene suelto
+    if (!agendaStr.startsWith('[')) agendaStr = '[' + agendaStr + ']';
+    try {
+      agendaStr = agendaStr.replace(/'/g, '"');
+      agendaData = JSON.parse(agendaStr);
+    } catch(e) { console.error("Fallo parseo secundario de agenda:", e); }
+  }
+
+  // 2. Extraer bloque Contactos (Busca todo desde "contactos": hasta el final)
+  const contactosRegex = /"contactos"\s*:\s*([\s\S]+)/i;
+  const contactosMatch = texto.match(contactosRegex);
+  if (contactosMatch) {
+    let contactosStr = contactosMatch[1].trim();
+    // Remover llaves de cierre de objeto JSON base
+    if (contactosStr.endsWith('}')) contactosStr = contactosStr.slice(0, -1).trim();
+    if (contactosStr.endsWith(',')) contactosStr = contactosStr.slice(0, -1).trim();
+    // Forzar envoltura de Array si viene suelto
+    if (!contactosStr.startsWith('[')) contactosStr = '[' + contactosStr + ']';
+    try {
+      contactosStr = contactosStr.replace(/'/g, '"');
+      contactosData = JSON.parse(contactosStr);
+    } catch(e) { console.error("Fallo parseo secundario de contactos:", e); }
+  }
+
+  // Respaldo clásico si por milagro el JSON vino perfecto de origen
+  if (!agendaMatch && !contactosMatch) {
+    try {
+      let json = JSON.parse(texto);
+      if (json.agenda) agendaData = json.agenda;
+      if (json.contactos) contactosData = json.contactos;
+    } catch(e){}
+  }
+
+  return {
+    agenda: Array.isArray(agendaData) ? agendaData : [agendaData].filter(Boolean),
+    contactos: Array.isArray(contactosData) ? contactosData : [contactosData].filter(Boolean)
+  };
 }
 
 async function cargar(){
   const btn=$('#refreshBtn');btn.classList.add('loading');
   if(!WEBHOOK_URL){
     DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
-    refreshUI();actualizarDatalistContactos();btn.classList.remove('loading');toast('Modo demo — datos simulados');return;
+    refreshUI();actualizarDatalistContactos();btn.classList.remove('loading');return;
   }
   try{
     const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar',token:API_TOKEN})});
     if(!res.ok)throw new Error('HTTP '+res.status);
     
-    // Leemos la respuesta como texto plano para interceptar cualquier error de comillas
     let textoRespuesta = await res.text();
-    let json = intentarParsearJSON(textoRespuesta);
+    console.log("Respuesta cruda directa de Make:", textoRespuesta);
     
-    console.log("Respuesta limpia de Make:", json);
+    // Procesamos la respuesta a través del desglosador inteligente
+    let datosCargados = desglosarRespuestaMalformada(textoRespuesta);
     
-    if(Array.isArray(json) && json.length > 0 && json[0].agenda){
-      json = json[0];
-    }
-    
-    if(json && (json.agenda !== undefined || json.contactos !== undefined)){
-      let agendaData = typeof json.agenda === 'string' ? intentarParsearJSON(json.agenda) : json.agenda;
-      let contactosData = typeof json.contactos === 'string' ? intentarParsearJSON(json.contactos) : json.contactos;
-      
-      DATA = Array.isArray(agendaData) ? agendaData : [];
-      CONTACTOS = Array.isArray(contactosData) ? contactosData : [];
-    } else {
-      DATA = Array.isArray(json) ? json : (json.items || json.data || []);
-      CONTACTOS = [];
-    }
+    DATA = datosCargados.agenda;
+    CONTACTOS = datosCargados.contactos;
     
     $('#statusPill').className='status-pill live';$('#statusTxt').textContent='En vivo';
     refreshUI();
     actualizarDatalistContactos(); 
     toast('Agenda actualizada');
   }catch(e){
-    console.error("Error crítico procesando los datos:", e);
+    console.error("Error crítico procesando la carga:", e);
     DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
     refreshUI();
     actualizarDatalistContactos();
-    toast('Error en formato de datos del servidor',true);
+    toast('Error al capturar datos de Make',true);
   }finally{btn.classList.remove('loading');}
 }
 cargar();
