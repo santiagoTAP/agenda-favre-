@@ -200,7 +200,8 @@ main{padding:16px 14px}
   font-family:'Archivo';font-size:14px;color:var(--ink);background:var(--paper);outline:none;transition:.15s}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red)}
 .field textarea{resize:vertical;min-height:60px}
-.field-row{display:flex;gap:10px}.field-row .field{flex:1}
+.field-row{display:flex;gap:10px}
+.field-row .field{flex:1}
 .obj-pick{display:flex;flex-wrap:wrap;gap:7px}
 .obj-pick .op{font-size:13px;font-weight:600;padding:8px 13px;border-radius:30px;background:var(--paper);
   border:1.5px solid var(--line2);color:var(--ink2);cursor:pointer;transition:.15s}
@@ -279,7 +280,11 @@ main{padding:16px 14px}
       <div class="obj-pick" id="fObjetivo"></div>
     </div>
     <div class="field"><label>Persona <span class="opt">(quién atiende)</span></label><input id="fPersona" placeholder="Ej: Santiago Favre"></div>
-    <div class="field"><label>Contacto <span class="opt">(cliente)</span></label><input id="fContacto" placeholder="Nombre del cliente"></div>
+    <div class="field">
+      <label>Contacto <span class="opt">(cliente)</span></label>
+      <input id="fContacto" list="listaContactos" placeholder="Nombre del cliente o selecciona...">
+      <datalist id="listaContactos"></datalist>
+    </div>
     <div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input id="fTelefono" inputmode="tel" placeholder="Ej: 2494123456"></div>
     <div class="field"><label>Ubicación <span class="opt">(opcional)</span></label><input id="fUbicacion" placeholder="Dirección"></div>
     <div class="modal-actions">
@@ -290,15 +295,17 @@ main{padding:16px 14px}
 </div>
 
 <script>
-
-const WEBHOOK_URL = "https://hook.us1.make.com/q67odesdv4mkrftpc7kwjdlfmku6wjem";   // <--- pegá tu URL de Make aquí
-const API_TOKEN   = "TestFavre-0506";   // <--- pegá tu token (igual al de Make)
-const WEBHOOK_CREAR = "https://hook.us1.make.com/ttal396rhyg6qcjpsmqcwybk8su5o6qs"; // <--- URL del webhook de Make para CREAR citas (la completás después)
+const WEBHOOK_URL = "https://hook.us1.make.com/q67odesdv4mkrftpc7kwjdlfmku6wjem";
+const API_TOKEN   = "TestFavre-0506";
+const WEBHOOK_CREAR = "https://hook.us1.make.com/ttal396rhyg6qcjpsmqcwybk8su5o6qs";
 
 const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
 const FRANJAS={'manana':{label:'Mañana · 7 a 12',min:7,max:12},'mediodia':{label:'Mediodía · 12 a 15',min:12,max:15},'tarde':{label:'Tarde · 15 en adelante',min:15,max:24}};
 
+const DEMO = []; // Fallback por si falla la conexión
+
 let DATA=[];
+let CONTACTOS=[]; // <--- Aquí guardaremos el array de contactos con {id, name}
 let F={persona:new Set(),objetivo:new Set(),franja:new Set(),dia:'',texto:'',orden:'fecha-asc'};
 let panelAbierto=null;
 
@@ -317,9 +324,7 @@ function personas(){const s=new Set();DATA.forEach(d=>(d.persona||'').split(',')
 function objetivos(){const s=new Set();DATA.forEach(d=>{if(d.objetivo)s.add(d.objetivo);});return[...s].sort();}
 
 function mapURL(d){
-  // Si hay coordenadas reales de Monday, usar el pin exacto
-  if(d.lat&&d.lng)return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.lat+','+d.lng);
-  // Si no, buscar por dirección de texto
+  if(d.lat&&d.lng)return 'http://maps.google.com/?q='+d.lat+','+d.lng;
   return d.ubicacion?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.ubicacion):'';
 }
 
@@ -412,8 +417,8 @@ function iconMap(){return iconLoc();}
 
 /* -------- VISTAS: lista / calendario -------- */
 let vista='lista';
-let calRef=new Date();           // mes que se muestra
-let calSel=dayKey(new Date());   // día seleccionado
+let calRef=new Date();
+let calSel=dayKey(new Date());
 
 function setVista(v){
   vista=v;
@@ -424,7 +429,6 @@ function setVista(v){
   if(v==='calendario'){irMesConCitas();renderCalendario();}else render();
 }
 
-// Si el mes actual no tiene citas, salta al mes de la cita más próxima
 function irMesConCitas(){
   const map=citasPorDia();
   const claves=Object.keys(map);
@@ -432,7 +436,6 @@ function irMesConCitas(){
   const mesActual=calRef.getFullYear()+'-'+String(calRef.getMonth()+1).padStart(2,'0');
   const hayEsteMes=claves.some(k=>k.startsWith(mesActual));
   if(hayEsteMes)return;
-  // buscar la fecha de cita más cercana a hoy
   const hoy=new Date();
   const fechas=claves.map(k=>new Date(k+'T12:00:00')).sort((a,b)=>Math.abs(a-hoy)-Math.abs(b-hoy));
   const target=fechas[0];
@@ -441,7 +444,6 @@ function irMesConCitas(){
 }
 
 function citasPorDia(){
-  // usa los mismos filtros activos (persona, objetivo, etc.) menos el día
   const map={};
   DATA.filter(d=>{
     if(!d.fecha)return false;
@@ -466,7 +468,7 @@ function renderCalendario(){
 
   const y=calRef.getFullYear(),m=calRef.getMonth();
   const primero=new Date(y,m,1);
-  const inicioSemana=(primero.getDay()+6)%7; // lunes=0
+  const inicioSemana=(primero.getDay()+6)%7;
   const diasMes=new Date(y,m+1,0).getDate();
   const hoyK=dayKey(new Date());
   const mesNombre=calRef.toLocaleDateString('es-AR',{month:'long',year:'numeric'});
@@ -522,7 +524,6 @@ const OBJETIVOS_FORM=['Reunion','Venta','Alquilar','Tasacion','Turno','Recibir l
 let objSel='Reunion';
 
 function abrirModal(diaK){
-  // precargar fecha del día tocado
   $('#fFecha').value=diaK||dayKey(new Date());
   $('#fHora').value='10:00';
   $('#fEvento').value='';$('#fPersona').value='';$('#fContacto').value='';$('#fTelefono').value='';$('#fUbicacion').value='';
@@ -535,12 +536,25 @@ function abrirModal(diaK){
 function cerrarModal(){$('#modalBg').classList.remove('show');}
 function pickObj(o,el){objSel=o;document.querySelectorAll('#fObjetivo .op').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');}
 
+// Genera las opciones visuales del buscador de contactos
+function actualizarDatalistContactos(){
+  const dl = $('#listaContactos');
+  if(!dl) return;
+  dl.innerHTML = CONTACTOS.map(c => `<option value="${esc(c.name)}"></option>`).join('');
+}
+
 async function enviarCita(){
   const evento=$('#fEvento').value.trim();
   const fecha=$('#fFecha').value;
   const hora=$('#fHora').value||'00:00';
+  const nombreContacto = $('#fContacto').value.trim();
+  
   if(!evento){toast('Poné un título para la cita',true);return;}
   if(!fecha){toast('Elegí una fecha',true);return;}
+
+  // Buscamos si el nombre ingresado coincide con un contacto para mandar también su ID
+  const matchContacto = CONTACTOS.find(c => c.name && c.name.toLowerCase() === nombreContacto.toLowerCase());
+  const contactoId = matchContacto ? matchContacto.id : '';
 
   const payload={
     accion:'crear',
@@ -549,7 +563,8 @@ async function enviarCita(){
     fecha:fecha+'T'+hora+':00',
     objetivo:objSel,
     persona:$('#fPersona').value.trim(),
-    contacto:$('#fContacto').value.trim(),
+    contacto:nombreContacto,
+    contacto_id:contactoId, // <--- Enviamos el ID detectado
     telefono:$('#fTelefono').value.trim(),
     ubicacion:$('#fUbicacion').value.trim()
   };
@@ -557,7 +572,6 @@ async function enviarCita(){
   const btn=$('#btnSave');btn.classList.add('sending');btn.textContent='Guardando';
 
   if(!WEBHOOK_CREAR){
-    // sin webhook configurado: lo agrega localmente como demostración
     DATA.push({id:'local-'+Date.now(),evento:payload.evento,persona:payload.persona,fecha:payload.fecha,
       ubicacion:payload.ubicacion,lat:'',lng:'',objetivo:payload.objetivo,contacto:payload.contacto,
       telefono:payload.telefono,estado:'Vigente',creacion_iso:new Date().toISOString().slice(0,19),creado_por:''});
@@ -573,8 +587,8 @@ async function enviarCita(){
     cerrarModal();
     toast('Cita creada — actualizando agenda…');
     calSel=fecha;
-    await cargar();           // recarga desde Monday
-    setVista('calendario');   // vuelve al calendario en el día creado
+    await cargar();
+    setVista('calendario');
   }catch(e){
     toast('No se pudo crear la cita. Revisá el webhook.',true);
   }finally{
@@ -625,24 +639,37 @@ function cardHTML(d,delay){
     ${d.creacion_iso?`<div class="c-foot">Creado ${d.creado_por?'por '+esc(d.creado_por)+' ':''}el ${fmtCrea(d.creacion_iso)}</div>`:''}
   </div>`;
 }
-function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));}
 
 async function cargar(){
   const btn=$('#refreshBtn');btn.classList.add('loading');
   if(!WEBHOOK_URL){
-    DATA=DEMO;$('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
-    refreshUI();btn.classList.remove('loading');toast('Modo demo — pegá tu webhook de Make para datos reales');return;
+    DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
+    refreshUI();actualizarDatalistContactos();btn.classList.remove('loading');toast('Modo demo — pegá tu webhook de Make para datos reales');return;
   }
   try{
     const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar',token:API_TOKEN})});
     if(!res.ok)throw new Error('HTTP '+res.status);
     const json=await res.json();
-    DATA=Array.isArray(json)?json:(json.items||json.data||[]);
+    
+    // Validamos si la respuesta viene con el objeto estructurado { agenda: ..., contactos: ... }
+    if(json && json.agenda){
+      DATA = Array.isArray(json.agenda) ? json.agenda : [];
+      CONTACTOS = Array.isArray(json.contactos) ? json.contactos : [];
+    } else {
+      DATA = Array.isArray(json) ? json : (json.items || json.data || []);
+      CONTACTOS = [];
+    }
+    
     $('#statusPill').className='status-pill live';$('#statusTxt').textContent='En vivo';
-    refreshUI();toast('Agenda actualizada');
+    refreshUI();
+    actualizarDatalistContactos(); // <--- Rellenamos el datalist dinámicamente
+    toast('Agenda actualizada');
   }catch(e){
-    DATA=DEMO;$('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
-    refreshUI();toast('No se pudo conectar a Make — mostrando demo',true);
+    DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
+    refreshUI();
+    actualizarDatalistContactos();
+    toast('No se pudo conectar a Make — mostrando demo',true);
   }finally{btn.classList.remove('loading');}
 }
 cargar();
