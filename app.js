@@ -1,6 +1,7 @@
 const WEBHOOK_URL = "https://hook.us1.make.com/q67odesdv4mkrftpc7kwjdlfmku6wjem";
 const API_TOKEN   = "TestFavre-0506";
 const WEBHOOK_CREAR = "https://hook.us1.make.com/ttal396rhyg6qcjpsmqcwybk8su5o6qs";
+const WEBHOOK_EDITAR = ""; // <--- URL del webhook de Make para EDITAR citas (lo conectás después)
 
 const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
 const FRANJAS={'manana':{label:'Mañana · 7 a 12',min:7,max:12},'mediodia':{label:'Mediodía · 12 a 15',min:12,max:15},'tarde':{label:'Tarde · 15 en adelante',min:15,max:24}};
@@ -193,7 +194,7 @@ function renderDia(){
   const colsDe={};
   eventos.forEach(ev=>{const slot=Math.floor((ev.min-HORA_INI*60)/30);colsDe[slot]=(colsDe[slot]||0)+1;});
 
-  html+=`<div class="tl" style="height:${(HORA_FIN-HORA_INI+1)*PX_HORA}px">`;
+  html+=`<div class="tl" id="tl" style="height:${(HORA_FIN-HORA_INI+1)*PX_HORA}px">`;
   for(let h=HORA_INI;h<=HORA_FIN;h++){
     const top=(h-HORA_INI)*PX_HORA;
     html+=`<div class="tl-row" style="top:${top}px">
@@ -208,6 +209,31 @@ function renderDia(){
       html+=`<div class="tl-now" style="top:${top}px"><span class="tl-now-dot"></span></div>`;
     }
   }
+  html+=`<div class="tl-drop-hint" id="dropHint" data-hora=""></div>`;
+  const usados={};
+  eventos.forEach(ev=>{
+    let min=ev.min;
+    const topRaw=((min-HORA_INI*60)/60)*PX_HORA;
+    const top=Math.max(0,topRaw);
+    const slot=Math.floor((min-HORA_INI*60)/30);
+    const totalCol=colsDe[slot]||1;
+    const idx=(usados[slot]=(usados[slot]||0));usados[slot]++;
+    const wPct=100/totalCol;
+    const t=OBJ_MAP[ev.c.objetivo]||'otro';
+    const fueraRango=(min<HORA_INI*60||min>HORA_FIN*60+59);
+    html+=`<div class="tl-ev ${t}" data-id="${ev.c.id}" style="top:${top}px;left:calc(54px + ${idx*wPct}%);width:calc(${wPct}% - ${idx===0&&totalCol===1?'12':'6'}px)" onpointerdown="dragStart(event,'${ev.c.id}')">
+      <div class="tl-ev-h">${fmtTime(ev.c.fecha)}${fueraRango?' ⚠':''}</div>
+      <div class="tl-ev-t">${esc(ev.c.contacto||ev.c.evento||'(sin título)')}</div>
+      ${ev.c.objetivo?`<div class="tl-ev-o">${esc(ev.c.objetivo)}</div>`:''}
+    </div>`;
+  });
+  html+='</div>';
+
+  if(!citas.length){
+    html+='<div class="cal-empty-day">Sin citas este día</div>';
+  }
+  cont.innerHTML=html;
+}
   const usados={};
   eventos.forEach(ev=>{
     let min=ev.min;
@@ -260,6 +286,7 @@ function abrirDetalle(id){
       <a class="act wa ${waLink?'':'disabled'}" ${waLink?`href="${waLink}" target="_blank" rel="noopener"`:''}>${iconWa()}WhatsApp</a>
       <a class="act map ${mLink?'':'disabled'}" ${mLink?`href="${mLink}" target="_blank" rel="noopener"`:''}>${iconMap()}Mapa</a>
     </div>
+    <button class="dt-edit" onclick="editarCita('${d.id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Editar</button>
     <button class="dt-close" onclick="cerrarDetalle()">Cerrar</button>`;
   $('#detalleInner').innerHTML=html;
   $('#detalleBg').classList.add('show');
@@ -270,8 +297,11 @@ function iconClock(){return'<svg width="16" height="16" viewBox="0 0 24 24" fill
 /* -------- MODAL NUEVA CITA -------- */
 const OBJETIVOS_FORM=['Reunion','Venta','Alquilar','Tasacion','Turno','Recibir llaves'];
 let objSel='Reunion';
+let editandoId=null;
 
 function abrirModal(diaK){
+  editandoId=null;
+  const h3=document.querySelector('#modalBg .modal h3'); if(h3)h3.textContent='Nueva cita';
   $('#fFecha').value=diaK||dayKey(new Date());
   $('#fHora').value='10:00';
   $('#fEvento').value='';$('#fPersona').value='';$('#fContacto').value='';$('#fTelefono').value='';$('#fUbicacion').value='';
@@ -280,6 +310,26 @@ function abrirModal(diaK){
   $('#fObjetivo').innerHTML=OBJETIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
   const ft=new Date((diaK||dayKey(new Date()))+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
   $('#modalFecha').textContent='Para el '+ft;
+  $('#modalBg').classList.add('show');
+}
+
+function editarCita(id){
+  const d=DATA.find(x=>String(x.id)===String(id));if(!d)return;
+  cerrarDetalle();
+  editandoId=id;
+  const dt=new Date(d.fecha);
+  $('#fFecha').value=dayKey(dt);
+  $('#fHora').value=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
+  $('#fEvento').value=d.evento||'';
+  $('#fPersona').value=d.persona||'';
+  $('#fContacto').value=d.contacto||'';
+  $('#fTelefono').value=d.telefono||'';
+  $('#fUbicacion').value=d.ubicacion||'';
+  if($('#fNotificar'))$('#fNotificar').checked=false;
+  objSel=d.objetivo||'Reunion';
+  $('#fObjetivo').innerHTML=OBJETIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
+  $('.modal h3') && (document.querySelector('.modal-bg#modalBg .modal h3').textContent='Editar cita');
+  $('#modalFecha').textContent='Modificá los datos y guardá';
   $('#modalBg').classList.add('show');
 }
 
@@ -311,9 +361,10 @@ async function enviarCita(){
   const contactoId = matchContacto ? matchContacto.id : '';
   const notificar = $('#fNotificar') ? $('#fNotificar').checked : false;
 
-  const payload={
-    accion:'crear',
+ const payload={
+    accion: editandoId ? 'editar' : 'crear',
     token:API_TOKEN,
+    id: editandoId || '',
     evento:evento,
     fecha:fecha+'T'+hora+':00',
     objetivo:objSel,
@@ -339,19 +390,19 @@ async function enviarCita(){
   }
 
   try{
-    const res=await fetch(WEBHOOK_CREAR,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const url = editandoId ? WEBHOOK_EDITAR : WEBHOOK_CREAR;
+    const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(!res.ok)throw new Error('HTTP '+res.status);
     cerrarModal();
-    toast('Cita creada — actualizando agenda…');
+    toast(editandoId ? 'Cita actualizada — recargando…' : 'Cita creada — actualizando agenda…');
     calSel=fecha;
     await cargar();
     setVista('dia');
   }catch(e){
-    toast('No se pudo crear la cita. Revisá el webhook.',true);
+    toast(editandoId ? 'No se pudo editar la cita.' : 'No se pudo crear la cita. Revisá el webhook.',true);
   }finally{
     btn.classList.remove('sending');btn.textContent='Guardar cita';
   }
-}
 
 function render(){
   const main=$('#main');
@@ -477,5 +528,95 @@ async function cargar(){
     actualizarDatalistContactos();
     toast('Error al capturar datos de Make',true);
   }finally{btn.classList.remove('loading');}
+}
+/* -------- DRAG & DROP de citas (cambiar hora dentro del día) -------- */
+let drag=null;
+
+function dragStart(e,id){
+  const el=e.currentTarget;
+  const tl=$('#tl');
+  const rect=el.getBoundingClientRect();
+  drag={
+    id, el, tl,
+    startY:e.clientY,
+    startTop:parseFloat(el.style.top)||0,
+    moved:false
+  };
+  el.setPointerCapture(e.pointerId);
+  el.addEventListener('pointermove',dragMove);
+  el.addEventListener('pointerup',dragEnd);
+}
+
+function dragMove(e){
+  if(!drag)return;
+  const dy=e.clientY-drag.startY;
+  if(Math.abs(dy)>4)drag.moved=true;
+  if(!drag.moved)return;
+  drag.el.classList.add('dragging');
+  let nuevoTop=drag.startTop+dy;
+  const maxTop=(HORA_FIN-HORA_INI)*PX_HORA;
+  nuevoTop=Math.max(0,Math.min(maxTop,nuevoTop));
+  drag.el.style.top=nuevoTop+'px';
+  // hora imantada (en punto)
+  const horaFloat=HORA_INI+(nuevoTop/PX_HORA);
+  const horaSnap=Math.round(horaFloat);
+  const hint=$('#dropHint');
+  if(hint){
+    hint.style.top=((horaSnap-HORA_INI)*PX_HORA)+'px';
+    hint.dataset.hora=String(horaSnap).padStart(2,'0')+':00';
+    hint.classList.add('show');
+  }
+  drag.horaSnap=horaSnap;
+}
+
+async function dragEnd(e){
+  if(!drag)return;
+  const {el,id,moved,horaSnap}=drag;
+  el.removeEventListener('pointermove',dragMove);
+  el.removeEventListener('pointerup',dragEnd);
+  el.classList.remove('dragging');
+  const hint=$('#dropHint');if(hint)hint.classList.remove('show');
+  drag=null;
+
+  if(!moved){ // fue un toque, no un arrastre -> abrir detalle
+    abrirDetalle(id);
+    return;
+  }
+  // calcular nueva hora
+  const cita=DATA.find(x=>String(x.id)===String(id));
+  if(!cita||horaSnap==null){renderDia();return;}
+  const dt=new Date(cita.fecha);
+  const original=dt.getHours();
+  if(horaSnap===original){renderDia();return;} // no cambió
+
+  dt.setHours(horaSnap,0,0,0);
+  const nuevaFechaISO=dayKey(dt)+'T'+String(horaSnap).padStart(2,'0')+':00:00';
+
+  // actualizar local primero (optimista)
+  const fechaPrevia=cita.fecha;
+  cita.fecha=nuevaFechaISO;
+  renderDia();
+
+  // avisar a Make
+  await guardarCambioHorario(id,nuevaFechaISO,fechaPrevia);
+}
+
+async function guardarCambioHorario(id,nuevaFecha,fechaPrevia){
+  if(!WEBHOOK_EDITAR){
+    toast('Horario cambiado (local — falta webhook de edición)');
+    return;
+  }
+  try{
+    const res=await fetch(WEBHOOK_EDITAR,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({accion:'editar',token:API_TOKEN,id:id,fecha:nuevaFecha})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    toast('Horario actualizado');
+  }catch(err){
+    // revertir si falla
+    const cita=DATA.find(x=>String(x.id)===String(id));
+    if(cita)cita.fecha=fechaPrevia;
+    renderDia();
+    toast('No se pudo guardar el cambio',true);
+  }
 }
 cargar();
