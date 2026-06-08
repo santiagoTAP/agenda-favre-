@@ -304,7 +304,7 @@ function editarCita(id){
   if($('#fNotificar'))$('#fNotificar').checked=false;
   objSel=d.objetivo||'Reunion';
   $('#fObjetivo').innerHTML=OBJETIVOS_FORM.map(o=>`<span class="op ${o===objSel?'sel':''}" onclick="pickObj('${o}',this)">${o}</span>`).join('');
-  $('.modal h3') && (document.querySelector('.modal-bg#modalBg .modal h3').textContent='Editar cita');
+  const h3=document.querySelector('#modalBg .modal h3'); if(h3)h3.textContent='Editar cita';
   $('#modalFecha').textContent='Modificá los datos y guardá';
   $('#modalBg').classList.add('show');
 }
@@ -337,7 +337,7 @@ async function enviarCita(){
   const contactoId = matchContacto ? matchContacto.id : '';
   const notificar = $('#fNotificar') ? $('#fNotificar').checked : false;
 
- const payload={
+  const payload={
     accion: editandoId ? 'editar' : 'crear',
     token:API_TOKEN,
     id: editandoId || '',
@@ -426,7 +426,7 @@ function cardHTML(d,delay){
 }
 function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
-// 🛡️ MOTOR DE EXTRACCIÓN POR REGEX (sana el JSON roto de Make en tiempo real)
+// MOTOR DE EXTRACCIÓN POR REGEX (sana el JSON roto de Make en tiempo real)
 function desglosarRespuestaMalformada(textoCrudo) {
   let agendaData = [];
   let contactosData = [];
@@ -506,13 +506,13 @@ async function cargar(){
     toast('Error al capturar datos de Make',true);
   }finally{btn.classList.remove('loading');}
 }
+
 /* -------- DRAG & DROP de citas (cambiar hora dentro del día) -------- */
 let drag=null;
 
 function dragStart(e,id){
   const el=e.currentTarget;
   const tl=$('#tl');
-  const rect=el.getBoundingClientRect();
   drag={
     id, el, tl,
     startY:e.clientY,
@@ -534,7 +534,6 @@ function dragMove(e){
   const maxTop=(HORA_FIN-HORA_INI)*PX_HORA;
   nuevoTop=Math.max(0,Math.min(maxTop,nuevoTop));
   drag.el.style.top=nuevoTop+'px';
-  // hora imantada (en punto)
   const horaFloat=HORA_INI+(nuevoTop/PX_HORA);
   const horaSnap=Math.round(horaFloat);
   const hint=$('#dropHint');
@@ -555,26 +554,21 @@ async function dragEnd(e){
   const hint=$('#dropHint');if(hint)hint.classList.remove('show');
   drag=null;
 
-  if(!moved){ // fue un toque, no un arrastre -> abrir detalle
-    abrirDetalle(id);
-    return;
-  }
-  // calcular nueva hora
+  if(!moved){ abrirDetalle(id); return; }
+
   const cita=DATA.find(x=>String(x.id)===String(id));
   if(!cita||horaSnap==null){renderDia();return;}
   const dt=new Date(cita.fecha);
   const original=dt.getHours();
-  if(horaSnap===original){renderDia();return;} // no cambió
+  if(horaSnap===original){renderDia();return;}
 
   dt.setHours(horaSnap,0,0,0);
   const nuevaFechaISO=dayKey(dt)+'T'+String(horaSnap).padStart(2,'0')+':00:00';
 
-  // actualizar local primero (optimista)
   const fechaPrevia=cita.fecha;
   cita.fecha=nuevaFechaISO;
   renderDia();
 
-  // avisar a Make
   await guardarCambioHorario(id,nuevaFechaISO,fechaPrevia);
 }
 
@@ -589,11 +583,11 @@ async function guardarCambioHorario(id,nuevaFecha,fechaPrevia){
     if(!res.ok)throw new Error('HTTP '+res.status);
     toast('Horario actualizado');
   }catch(err){
-    // revertir si falla
     const cita=DATA.find(x=>String(x.id)===String(id));
     if(cita)cita.fecha=fechaPrevia;
     renderDia();
     toast('No se pudo guardar el cambio',true);
   }
 }
+
 cargar();
