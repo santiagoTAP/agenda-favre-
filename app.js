@@ -82,7 +82,7 @@ function refreshUI(){
   setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
   const activo=F.persona.size||F.objetivo.size||F.franja.size||F.dia||F.texto||F.orden!=='fecha-asc';
   $('#clearAll').className='clear-all'+(activo?' show':'');
-  if(vista==='calendario')renderCalendario();else render();
+  if(vista==='dia')renderDia();else render();
 }
 function badge(name,n){const b=$('#b'+name);if(n>0){b.textContent=n;b.style.display='flex';}else b.style.display='none';}
 function setOn(id,cond){$('#'+id).classList.toggle('on',!!cond);}
@@ -345,7 +345,7 @@ async function enviarCita(){
     toast('Cita creada — actualizando agenda…');
     calSel=fecha;
     await cargar();
-    setVista('calendario');
+    setVista('dia');
   }catch(e){
     toast('No se pudo crear la cita. Revisá el webhook.',true);
   }finally{
