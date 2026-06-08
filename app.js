@@ -1,6 +1,6 @@
 const WEBHOOK_URL = "https://hook.us1.make.com/q67odesdv4mkrftpc7kwjdlfmku6wjem";
 const API_TOKEN   = "TestFavre-0506";
-const WEBHOOK_CREAR = "";
+const WEBHOOK_CREAR = ""; // <--- configurá el webhook de creación
 const WEBHOOK_EDITAR = ""; // <--- URL del webhook de Make para EDITAR citas (lo conectás después)
 
 const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
@@ -328,7 +328,7 @@ async function enviarCita(){
   const fecha=$('#fFecha').value;
   const hora=$('#fHora').value||'00:00';
   const nombreContacto = $('#fContacto').value.trim();
-  
+
   if(!evento){toast('Poné un título para la cita',true);return;}
   if(!fecha){toast('Elegí una fecha',true);return;}
 
@@ -346,36 +346,74 @@ async function enviarCita(){
     objetivo:objSel,
     persona:$('#fPersona').value.trim(),
     contacto:nombreContacto,
-    contacto_id:contactoId, 
+    contacto_id:contactoId,
     telefono:$('#fTelefono').value.trim(),
     ubicacion:$('#fUbicacion').value.trim(),
     notificar:notificar,
     notificar_texto:notificar?'Si':'No'
   };
 
-  const btn=$('#btnSave');btn.classList.add('sending');btn.textContent='Guardando';
+  // destino según crear o editar
+  const url = editandoId ? WEBHOOK_EDITAR : WEBHOOK_CREAR;
 
-  if(!WEBHOOK_CREAR){
-    DATA.push({id:'local-'+Date.now(),evento:payload.evento,persona:payload.persona,fecha:payload.fecha,
-      ubicacion:payload.ubicacion,lat:'',lng:'',objetivo:payload.objetivo,contacto:payload.contacto,
-      telefono:payload.telefono,estado:'Vigente',creacion_iso:new Date().toISOString().slice(0,19),creado_por:''});
-    btn.classList.remove('sending');btn.textContent='Guardar cita';
-    cerrarModal();calSel=fecha;refreshUI();
-    toast('Cita agregada (local — falta configurar webhook de alta)');
+  if(!url){
+    toast(editandoId ? 'Configurá el webhook de edición' : 'Configurá el webhook de creación',true);
     return;
   }
 
+  const btn=$('#btnSave');btn.classList.add('sending');btn.textContent='Guardando';
+
   try{
-    const url = editandoId ? WEBHOOK_EDITAR : WEBHOOK_CREAR;
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!res.ok)throw new Error('HTTP '+res.status);
+    const textoResp=await res.text();
+
+    // intentar parsear la respuesta como JSON
+    let resp=null;
+    try{ resp=JSON.parse(textoResp); }catch(e){ resp=null; }
+
+    if(!res.ok){
+      // error HTTP: mostrar lo que devolvió
+      const msg=(resp && (resp.error||resp.message)) || textoResp || ('HTTP '+res.status);
+      toast('Error: '+msg, true);
+      return;
+    }
+
+    // respuesta OK: chequear si el webhook indica error en el cuerpo
+    if(resp && resp.ok===false){
+      toast('Error: '+(resp.error||resp.message||'No se pudo crear'), true);
+      return;
+    }
+
+    // tomar los datos de la cita que devolvió el webhook
+    let citaNueva = (resp && (resp.cita||resp.item||resp.data)) || null;
+
+    // si el webhook no devolvió la cita, usar lo que cargó el usuario como respaldo
+    if(!citaNueva){
+      citaNueva={
+        id: (resp && resp.id) ? String(resp.id) : ('local-'+Date.now()),
+        evento:payload.evento, persona:payload.persona, fecha:payload.fecha,
+        ubicacion:payload.ubicacion, lat:'', lng:'', objetivo:payload.objetivo,
+        contacto:payload.contacto, telefono:payload.telefono, estado:'Vigente',
+        creacion_iso:new Date().toISOString().slice(0,19), creado_por:''
+      };
+    }
+
+    if(editandoId){
+      // reemplazar la cita existente
+      const i=DATA.findIndex(x=>String(x.id)===String(editandoId));
+      if(i>=0) DATA[i]={...DATA[i], ...citaNueva};
+    }else{
+      // agregar la nueva cita
+      DATA.push(citaNueva);
+    }
+
     cerrarModal();
-    toast(editandoId ? 'Cita actualizada — recargando…' : 'Cita creada — actualizando agenda…');
-    calSel=fecha;
-    await cargar();
+    calSel=dayKey(new Date(citaNueva.fecha||payload.fecha));
+    refreshUI();
     setVista('dia');
+    toast(editandoId ? 'Cita actualizada' : 'Cita creada');
   }catch(e){
-    toast(editandoId ? 'No se pudo editar la cita.' : 'No se pudo crear la cita. Revisá el webhook.',true);
+    toast('No se pudo conectar con el webhook: '+e.message, true);
   }finally{
     btn.classList.remove('sending');btn.textContent='Guardar cita';
   }
