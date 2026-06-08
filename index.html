@@ -1,15 +1,3 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-  <meta name="theme-color" content="#ffffff">
-  <title>Agenda Inmobiliaria Favre</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Archivo+Narrow:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
-</head>
 <body>
 
 <header>
@@ -40,9 +28,9 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       Lista
     </button>
-    <button class="tab" id="tabCal" onclick="setVista('calendario')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      Calendario
+    <button class="tab" id="tabCal" onclick="setVista('dia')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      Día
     </button>
   </div>
 </header>
@@ -53,6 +41,11 @@
 <button class="fab-refresh" id="refreshBtn" onclick="cargar()">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg> Actualizar
 </button>
+
+<div class="modal-bg" id="detalleBg" onclick="if(event.target===this)cerrarDetalle()">
+  <div class="modal dt-modal"><div id="detalleInner"></div></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <div class="modal-bg" id="modalBg" onclick="if(event.target===this)cerrarModal()">
@@ -73,20 +66,12 @@
       <div class="obj-pick" id="fObjetivo"></div>
     </div>
     <div class="field"><label>Persona <span class="opt">(quién atiende)</span></label><input id="fPersona" placeholder="Ej: Santiago Favre"></div>
-    <div class="field">
-      <label>Contacto <span class="opt">(cliente)</span></label>
-      <input id="fContacto" list="listaContactos" placeholder="Nombre del cliente o selecciona...">
-      <datalist id="listaContactos"></datalist>
-    </div>
-<div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input id="fTelefono" inputmode="tel" placeholder="Ej: 2494123456"></div>
+    <div class="field"><label>Contacto <span class="opt">(cliente)</span></label><input id="fContacto" list="listaContactos" placeholder="Buscá o escribí un nombre" autocomplete="off"><datalist id="listaContactos"></datalist></div>
+    <div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input id="fTelefono" inputmode="tel" placeholder="Ej: 2494123456"></div>
     <div class="field"><label>Ubicación <span class="opt">(opcional)</span></label><input id="fUbicacion" placeholder="Dirección"></div>
     <div class="field-toggle">
       <div class="lbl">Notificar al contacto<small>Enviar aviso por WhatsApp</small></div>
-      <label class="switch">
-        <input type="checkbox" id="fNotificar">
-        <span class="track"></span>
-        <span class="knob"></span>
-      </label>
+      <label class="switch"><input type="checkbox" id="fNotificar"><span class="track"></span><span class="knob"></span></label>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
@@ -94,7 +79,3 @@
     </div>
   </div>
 </div>
-
-<script src="app.js"></script>
-</body>
-</html>
