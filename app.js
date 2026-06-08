@@ -1,6 +1,6 @@
 const WEBHOOK_URL = "https://hook.us1.make.com/q67odesdv4mkrftpc7kwjdlfmku6wjem";
 const API_TOKEN   = "TestFavre-0506";
-const WEBHOOK_CREAR = "https://hook.us1.make.com/ttal396rhyg6qcjpsmqcwybk8su5o6qs";
+const WEBHOOK_CREAR = "";
 const WEBHOOK_EDITAR = ""; // <--- URL del webhook de Make para EDITAR citas (lo conectás después)
 
 const OBJ_MAP={'Reunion':'reunion','Venta':'venta','Alquilar':'alquilar','Tasacion':'tasacion','Turno':'turno'};
