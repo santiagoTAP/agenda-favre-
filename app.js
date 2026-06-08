@@ -234,30 +234,6 @@ function renderDia(){
   }
   cont.innerHTML=html;
 }
-  const usados={};
-  eventos.forEach(ev=>{
-    let min=ev.min;
-    const topRaw=((min-HORA_INI*60)/60)*PX_HORA;
-    const top=Math.max(0,topRaw);
-    const slot=Math.floor((min-HORA_INI*60)/30);
-    const totalCol=colsDe[slot]||1;
-    const idx=(usados[slot]=(usados[slot]||0));usados[slot]++;
-    const wPct=100/totalCol;
-    const t=OBJ_MAP[ev.c.objetivo]||'otro';
-    const fueraRango=(min<HORA_INI*60||min>HORA_FIN*60+59);
-    html+=`<div class="tl-ev ${t}" style="top:${top}px;left:calc(54px + ${idx*wPct}%);width:calc(${wPct}% - ${idx===0&&totalCol===1?'12':'6'}px)" onclick="abrirDetalle('${ev.c.id}')">
-      <div class="tl-ev-h">${fmtTime(ev.c.fecha)}${fueraRango?' ⚠':''}</div>
-      <div class="tl-ev-t">${esc(ev.c.contacto||ev.c.evento||'(sin título)')}</div>
-      ${ev.c.objetivo?`<div class="tl-ev-o">${esc(ev.c.objetivo)}</div>`:''}
-    </div>`;
-  });
-  html+='</div>';
-
-  if(!citas.length){
-    html+='<div class="cal-empty-day">Sin citas este día</div>';
-  }
-  cont.innerHTML=html;
-}
 
 /* -------- MODAL DETALLE DE CITA -------- */
 function abrirDetalle(id){
@@ -403,6 +379,7 @@ async function enviarCita(){
   }finally{
     btn.classList.remove('sending');btn.textContent='Guardar cita';
   }
+}
 
 function render(){
   const main=$('#main');
