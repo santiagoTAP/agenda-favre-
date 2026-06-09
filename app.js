@@ -14,7 +14,7 @@ let F={persona:new Set(),objetivo:new Set(),franja:new Set(),dia:'',texto:'',ord
 let panelAbierto=null;
 
 const $=s=>document.querySelector(s);
-function toast(msg,err){const t=$('#toast');t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',2800);}
+function toast(msg,err){const t=$('#toast');if(!t)return;t.textContent=msg;t.className='toast show'+(err?' err':'');setTimeout(()=>t.className='toast',2800);}
 
 function fmtTime(iso){const d=new Date(iso);if(isNaN(d))return'--';return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
 function dayKey(iso){const d=new Date(iso);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -82,17 +82,17 @@ function refreshUI(){
   setOn('tgPersona',F.persona.size);setOn('tgObjetivo',F.objetivo.size);setOn('tgFranja',F.franja.size);
   setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
 
-  // Ocultar filtros innecesarios en la vista diaria
+  // CORRECCIÓN CENTRAL: Forzar ocultado o visibilidad estricta según la vista activa
   const esVistaDia = (vista === 'dia');
-  if($('#tgFecha')) $('#tgFecha').style.display = esVistaDia ? 'none' : 'flex';
-  if($('#tgOrden')) $('#tgOrden').style.display = esVistaDia ? 'none' : 'flex';
+  if($('#tgFecha')) $('#tgFecha').style.style.setProperty('display', esVistaDia ? 'none' : 'flex', 'important');
+  if($('#tgOrden')) $('#tgOrden').style.style.setProperty('display', esVistaDia ? 'none' : 'flex', 'important');
 
   const activo=F.persona.size||F.objetivo.size||F.franja.size||F.dia||F.texto||F.orden!=='fecha-asc';
   $('#clearAll').className='clear-all'+(activo?' show':'');
   if(vista==='dia')renderDia();else render();
 }
-function badge(name,n){const b=$('#b'+name);if(n>0){b.textContent=n;b.style.display='flex';}else b.style.display='none';}
-function setOn(id,cond){$('#'+id).classList.toggle('on',!!cond);}
+function badge(name,n){const b=$('#b'+name);if(!b)return;if(n>0){b.textContent=n;b.style.display='flex';}else b.style.display='none';}
+function setOn(id,cond){const el=$('#'+id);if(el)el.classList.toggle('on',!!cond);}
 
 /* -------- APLICAR FILTROS -------- */
 function filtrar(){
@@ -136,7 +136,10 @@ function setVista(v){
   $('#tabCal').classList.toggle('on',v==='dia');
   $('#main').classList.toggle('hidden',v!=='lista');
   $('#calView').classList.toggle('hidden',v!=='dia');
-  if(v==='dia'){irDiaConCitas();renderDia();}else render();
+  if(v==='dia') irDiaConCitas();
+  
+  // CORRECCIÓN CENTRAL: refreshUI se encarga de re-renderizar y evaluar los botones de filtro ocultos
+  refreshUI();
 }
 
 function irDiaConCitas(){
@@ -172,6 +175,7 @@ const HORA_INI=7, HORA_FIN=21, PX_HORA=58;
 
 function renderDia(){
   const cont=$('#calView');
+  if(!cont)return;
   const map=citasPorDia();
   const citas=(map[calSel]||[]).slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
   $('#subCount').innerHTML=`<b>${citas.length}</b> cita${citas.length!==1?'s':''}`;
@@ -284,7 +288,7 @@ let editandoId=null;
 
 function abrirModal(diaK){
   editandoId=null;
-  if($('#subFormContacto')) toggleFormContacto(false);
+  toggleFormContacto(false); 
   const h3=document.querySelector('#modalBg .modal h3'); if(h3)h3.textContent='Nueva cita';
   $('#fFecha').value=diaK||dayKey(new Date());
   $('#fHora').value='10:00';
@@ -301,7 +305,7 @@ function editarCita(id){
   const d=DATA.find(x=>String(x.id)===String(id));if(!d)return;
   cerrarDetalle();
   editandoId=id;
-  if($('#subFormContacto')) toggleFormContacto(false);
+  toggleFormContacto(false); 
   const dt=new Date(d.fecha);
   $('#fFecha').value=dayKey(dt);
   $('#fHora').value=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
@@ -332,24 +336,28 @@ function actualizarDatalistContactos(){
   }).join('');
 }
 
-/* LÓGICA DE ALTA RÁPIDA DE CONTACTOS FRONTIER */
+/* CORRECCIÓN CENTRAL: Lógica blindada contra nulos para evitar congelamientos */
 function toggleFormContacto(show) {
   const form = $('#subFormContacto');
   if (!form) return;
+  
   if (show === undefined) {
-    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
   } else {
     form.style.display = show ? 'block' : 'none';
   }
+  
   if (form.style.display === 'none') {
-    $('#ncNombre').value = ''; $('#ncApellido').value = ''; $('#ncTelefono').value = '';
+    if($('#ncNombre')) $('#ncNombre').value = ''; 
+    if($('#ncApellido')) $('#ncApellido').value = ''; 
+    if($('#ncTelefono')) $('#ncTelefono').value = '';
   }
 }
 
 function confirmarNuevoContacto() {
-  const nom = $('#ncNombre').value.trim();
-  const ape = $('#ncApellido').value.trim();
-  const tel = $('#ncTelefono').value.trim();
+  const nom = $('#ncNombre') ? $('#ncNombre').value.trim() : '';
+  const ape = $('#ncApellido') ? $('#ncApellido').value.trim() : '';
+  const tel = $('#ncTelefono') ? $('#ncTelefono').value.trim() : '';
 
   if (!nom || !ape) {
     toast('Por favor, cargá Nombre y Apellido', true);
@@ -357,8 +365,8 @@ function confirmarNuevoContacto() {
   }
 
   const nombreCompleto = nom + ' ' + ape;
-  $('#fContacto').value = nombreCompleto;
-  $('#fTelefono').value = tel;
+  if($('#fContacto')) $('#fContacto').value = nombreCompleto;
+  if($('#fTelefono')) $('#fTelefono').value = tel;
 
   CONTACTOS.push({
     id: 'nuevo-' + Date.now(),
@@ -381,10 +389,10 @@ function autoLlenarTelefonoPorContacto(nombre) {
 }
 
 async function enviarCita(){
-  const evento=$('#fEvento').value.trim();
-  const fecha=$('#fFecha').value;
-  const hora=$('#fHora').value||'00:00';
-  const nombreContacto = $('#fContacto').value.trim();
+  const evento=$('#fEvento') ? $('#fEvento').value.trim() : '';
+  const fecha=$('#fFecha') ? $('#fFecha').value : '';
+  const hora=$('#fHora') ? $('#fHora').value||'00:00' : '00:00';
+  const nombreContacto = $('#fContacto') ? $('#fContacto').value.trim() : '';
 
   if(!evento){toast('Poné un título para la cita',true);return;}
   if(!fecha){toast('Elegí una fecha',true);return;}
@@ -401,11 +409,11 @@ async function enviarCita(){
     evento:evento,
     fecha:fecha+'T'+hora+':00',
     objetivo:objSel,
-    persona:$('#fPersona').value.trim(),
+    persona:$('#fPersona') ? $('#fPersona').value.trim() : '',
     contacto:nombreContacto,
     contacto_id:contactoId,
-    telefono:$('#fTelefono').value.trim(),
-    ubicacion:$('#fUbicacion').value.trim(),
+    telefono:$('#fTelefono') ? $('#fTelefono').value.trim() : '',
+    ubicacion=$('#fUbicacion') ? $('#fUbicacion').value.trim() : '',
     notificar:notificar,
     notificar_texto:notificar?'Si':'No'
   };
@@ -417,7 +425,8 @@ async function enviarCita(){
     return;
   }
 
-  const btn=$('#btnSave');btn.classList.add('sending');btn.textContent='Guardando';
+  const btn=$('#btnSave'); if(!btn) return;
+  btn.classList.add('sending');btn.textContent='Guardando';
 
   try{
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
@@ -464,12 +473,12 @@ async function enviarCita(){
   }catch(e){
     toast('No se pudo conectar con el webhook: '+e.message, true);
   }finally{
-    btn.classList.remove('sending');btn.textContent='Guardar cita';
+    if($('#btnSave')) { $('#btnSave').classList.remove('sending'); $('#btnSave').textContent='Guardar cita'; }
   }
 }
 
 function render(){
-  const main=$('#main');
+  const main=$('#main'); if(!main) return;
   let items=ordenar(filtrar());
   $('#subCount').innerHTML=`<b>${items.length}</b> cita${items.length!==1?'s':''}`;
   if(!items.length){main.innerHTML='<div class="empty"><svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg><p>No hay citas con estos filtros</p></div>';return;}
@@ -515,7 +524,6 @@ function cardHTML(d,delay){
 }
 function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));}
 
-// MOTOR DE EXTRACCIÓN POR REGEX (sana el JSON roto de Make en tiempo real)
 function desglosarRespuestaMalformada(textoCrudo) {
   let agendaData = [];
   let contactosData = [];
@@ -528,4 +536,154 @@ function desglosarRespuestaMalformada(textoCrudo) {
     }
   }
 
-  const agendaRegex = /"agenda"\s*:\s*([\s\S]+?),\s*"contactos"\s*:/i
+  const agendaRegex = /"agenda"\s*:\s*([\s\S]+?),\s*"contactos"\s*:/i;
+  const agendaMatch = texto.match(agendaRegex);
+  if (agendaMatch) {
+    let agendaStr = agendaMatch[1].trim();
+    if (!agendaStr.startsWith('[')) agendaStr = '[' + agendaStr + ']';
+    try {
+      agendaStr = agendaStr.replace(/'/g, '"');
+      agendaData = JSON.parse(agendaStr);
+    } catch(e) { console.error("Fallo parseo secundario de agenda:", e); }
+  }
+
+  const contactosRegex = /"contactos"\s*:\s*([\s\S]+)/i;
+  const contactosMatch = texto.match(contactosRegex);
+  if (contactosMatch) {
+    let contactosStr = contactosMatch[1].trim();
+    if (contactosStr.endsWith('}')) contactosStr = contactosStr.slice(0, -1).trim();
+    if (contactosStr.endsWith(',')) contactosStr = contactosStr.slice(0, -1).trim();
+    if (!contactosStr.startsWith('[')) contactosStr = '[' + contactosStr + ']';
+    try {
+      contactosStr = contactosStr.replace(/'/g, '"');
+      contactosData = JSON.parse(contactosStr);
+    } catch(e) { console.error("Fallo parseo secundario de contactos:", e); }
+  }
+
+  if (!agendaMatch && !contactosMatch) {
+    try {
+      let json = JSON.parse(texto);
+      if (json.agenda) agendaData = json.agenda;
+      if (json.contactos) contactosData = json.contactos;
+    } catch(e){}
+  }
+
+  return {
+    agenda: Array.isArray(agendaData) ? agendaData : [agendaData].filter(Boolean),
+    contactos: Array.isArray(contactosData) ? contactosData : [contactosData].filter(Boolean)
+  };
+}
+
+async function cargar(){
+  const btn=$('#refreshBtn'); if(btn) btn.classList.add('loading');
+  if(!WEBHOOK_URL){
+    DATA=DEMO; CONTACTOS=[]; if($('#statusPill')) $('#statusPill').className='status-pill demo'; if($('#statusTxt')) $('#statusTxt').textContent='Demo';
+    refreshUI();actualizarDatalistContactos(); if(btn) btn.classList.remove('loading');return;
+  }
+  try{
+    const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar',token:API_TOKEN})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    
+    let textoRespuesta = await res.text();
+    let datosCargados = desglosarRespuestaMalformada(textoRespuesta);
+    
+    DATA = datosCargados.agenda;
+    CONTACTOS = datosCargados.contactos;
+    
+    if($('#statusPill')) $('#statusPill').className='status-pill live'; if($('#statusTxt')) $('#statusTxt').textContent='En vivo';
+    refreshUI();
+    actualizarDatalistContactos(); 
+    toast('Agenda actualizada');
+  }catch(e){
+    console.error("Error crítico procesando la carga:", e);
+    DATA=DEMO; CONTACTOS=[]; if($('#statusPill')) $('#statusPill').className='status-pill demo'; if($('#statusTxt')) $('#statusTxt').textContent='Demo';
+    refreshUI();
+    actualizarDatalistContactos();
+    toast('Error al capturar datos de Make',true);
+  }finally{ if(btn) btn.classList.remove('loading'); }
+}
+
+/* -------- DRAG & DROP de citas -------- */
+let drag=null;
+
+function dragStart(e,id){
+  const el=e.currentTarget;
+  const tl=$('#tl');
+  drag={
+    id, el, tl,
+    startY:e.clientY,
+    startTop:parseFloat(el.style.top)||0,
+    moved:false
+  };
+  el.setPointerCapture(e.pointerId);
+  el.addEventListener('pointermove',dragMove);
+  el.addEventListener('pointerup',dragEnd);
+}
+
+function dragMove(e){
+  if(!drag)return;
+  const dy=e.clientY-drag.startY;
+  if(Math.abs(dy)>4)drag.moved=true;
+  if(!drag.moved)return;
+  drag.el.classList.add('dragging');
+  let nuevoTop=drag.startTop+dy;
+  const maxTop=(HORA_FIN-HORA_INI)*PX_HORA;
+  nuevoTop=Math.max(0,Math.min(maxTop,nuevoTop));
+  drag.el.style.top=nuevoTop+'px';
+  const horaFloat=HORA_INI+(nuevoTop/PX_HORA);
+  const horaSnap=Math.round(horaFloat);
+  const hint=$('#dropHint');
+  if(hint){
+    hint.style.top=((horaSnap-HORA_INI)*PX_HORA)+'px';
+    hint.dataset.hora=String(horaSnap).padStart(2,'0')+':00';
+    hint.classList.add('show');
+  }
+  drag.horaSnap=horaSnap;
+}
+
+async function dragEnd(e){
+  if(!drag)return;
+  const {el,id,moved,horaSnap}=drag;
+  el.removeEventListener('pointermove',dragMove);
+  el.removeEventListener('pointerup',dragEnd);
+  el.classList.remove('dragging');
+  const hint=$('#dropHint');if(hint)hint.classList.remove('show');
+  drag=null;
+
+  if(!moved){ abrirDetalle(id); return; }
+
+  const cita=DATA.find(x=>String(x.id)===String(id));
+  if(!cita||horaSnap==null){renderDia();return;}
+  const dt=new Date(cita.fecha);
+  const original=dt.getHours();
+  if(horaSnap===original){renderDia();return;}
+
+  dt.setHours(horaSnap,0,0,0);
+  const nuevaFechaISO=dayKey(dt)+'T'+String(horaSnap).padStart(2,'0')+':00:00';
+
+  const fechaPrevia=cita.fecha;
+  cita.fecha=nuevaFechaISO;
+  renderDia();
+
+  await guardarCambioHorario(id,nuevaFechaISO,fechaPrevia);
+}
+
+async function guardarCambioHorario(id,nuevaFecha,fechaPrevia){
+  if(!WEBHOOK_EDITAR){
+    toast('Horario cambiado (local — falta webhook de edición)');
+    return;
+  }
+  try{
+    const res=await fetch(WEBHOOK_EDITAR,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({accion:'editar',token:API_TOKEN,id:id,fecha:nuevaFecha})});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    toast('Horario actualizado');
+  }catch(err){
+    const cita=DATA.find(x=>String(x.id)===String(id));
+    if(cita)cita.fecha=fechaPrevia;
+    renderDia();
+    toast('No se pudo guardar el cambio',true);
+  }
+}
+
+cargar();
