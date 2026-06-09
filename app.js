@@ -82,11 +82,10 @@ function refreshUI(){
   setOn('tgPersona',F.persona.size);setOn('tgObjetivo',F.objetivo.size);setOn('tgFranja',F.franja.size);
   setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
 
-  // ========== NUEVO: OCULTAR FILTROS INUTILES EN VISTA DIA ==========
+  // Ocultar filtros innecesarios en la vista diaria
   const esVistaDia = (vista === 'dia');
   if($('#tgFecha')) $('#tgFecha').style.display = esVistaDia ? 'none' : 'flex';
   if($('#tgOrden')) $('#tgOrden').style.display = esVistaDia ? 'none' : 'flex';
-  // ==================================================================
 
   const activo=F.persona.size||F.objetivo.size||F.franja.size||F.dia||F.texto||F.orden!=='fecha-asc';
   $('#clearAll').className='clear-all'+(activo?' show':'');
@@ -123,10 +122,9 @@ function ordenar(items){
 
 function iconLoc(){return'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>';}
 function iconUser(){return'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';}
-function iconWa(){
-  return '<svg style="width: 14px; height: 14px; min-width: 14px; flex-shrink: 0;" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.2s-.7.9-.9 1.1c-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15l-1.3 4.7L7 20.4A10 10 0 1 0 12 2z"/></svg>';
-}
+function iconWa(){return'<svg style="width: 14px; height: 14px; min-width: 14px; flex-shrink: 0;" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.2s-.7.9-.9 1.1c-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5 0-.2 0-.4 0-.5 0-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5 4.5.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 2a10 10 0 0 0-8.6 15l-1.3 4.7L7 20.4A10 10 0 1 0 12 2z"/></svg>';}
 function iconMap(){return iconLoc();}
+function iconClock(){return'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';}
 
 /* -------- VISTAS: lista / día -------- */
 let vista='lista';
@@ -184,9 +182,10 @@ function renderDia(){
 
   let html=`<div class="day-bar">
     <button class="day-arrow" onclick="calDia(-1)">‹</button>
-    <div class="day-bar-center">
-      <div class="day-bar-title ${esHoy?'is-today':''}">${esHoy?'Hoy':titulo}</div>
+    <div class="day-bar-center" style="position:relative; cursor:pointer;">
+      <div class="day-bar-title ${esHoy?'is-today':''}">${esHoy?'Hoy':titulo} 📅</div>
       ${esHoy?`<div class="day-bar-sub">${titulo}</div>`:''}
+      <input type="date" value="${calSel}" onchange="selDia(this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer;">
     </div>
     <button class="day-arrow" onclick="calDia(1)">›</button>
   </div>
@@ -277,7 +276,6 @@ function abrirDetalle(id){
   $('#detalleBg').classList.add('show');
 }
 function cerrarDetalle(){$('#detalleBg').classList.remove('show');}
-function iconClock(){return'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';}
 
 /* -------- MODAL NUEVA CITA -------- */
 const OBJETIVOS_FORM=['Reunion','Venta','Alquilar','Tasacion','Turno','Recibir llaves'];
@@ -286,6 +284,7 @@ let editandoId=null;
 
 function abrirModal(diaK){
   editandoId=null;
+  if($('#subFormContacto')) toggleFormContacto(false);
   const h3=document.querySelector('#modalBg .modal h3'); if(h3)h3.textContent='Nueva cita';
   $('#fFecha').value=diaK||dayKey(new Date());
   $('#fHora').value='10:00';
@@ -302,6 +301,7 @@ function editarCita(id){
   const d=DATA.find(x=>String(x.id)===String(id));if(!d)return;
   cerrarDetalle();
   editandoId=id;
+  if($('#subFormContacto')) toggleFormContacto(false);
   const dt=new Date(d.fecha);
   $('#fFecha').value=dayKey(dt);
   $('#fHora').value=String(dt.getHours()).padStart(2,'0')+':'+String(dt.getMinutes()).padStart(2,'0');
@@ -330,6 +330,54 @@ function actualizarDatalistContactos(){
     }
     return '';
   }).join('');
+}
+
+/* LÓGICA DE ALTA RÁPIDA DE CONTACTOS FRONTIER */
+function toggleFormContacto(show) {
+  const form = $('#subFormContacto');
+  if (!form) return;
+  if (show === undefined) {
+    form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  } else {
+    form.style.display = show ? 'block' : 'none';
+  }
+  if (form.style.display === 'none') {
+    $('#ncNombre').value = ''; $('#ncApellido').value = ''; $('#ncTelefono').value = '';
+  }
+}
+
+function confirmarNuevoContacto() {
+  const nom = $('#ncNombre').value.trim();
+  const ape = $('#ncApellido').value.trim();
+  const tel = $('#ncTelefono').value.trim();
+
+  if (!nom || !ape) {
+    toast('Por favor, cargá Nombre y Apellido', true);
+    return;
+  }
+
+  const nombreCompleto = nom + ' ' + ape;
+  $('#fContacto').value = nombreCompleto;
+  $('#fTelefono').value = tel;
+
+  CONTACTOS.push({
+    id: 'nuevo-' + Date.now(),
+    name: nombreCompleto,
+    telefono: tel
+  });
+
+  actualizarDatalistContactos();
+  toggleFormContacto(false);
+  toast('Contacto cargado a la cita');
+}
+
+function autoLlenarTelefonoPorContacto(nombre) {
+  const norm = s => (s||'').toLowerCase().replace(/\s+/g,' ').trim();
+  const match = CONTACTOS.find(c => c && c.name && norm(c.name) === norm(nombre));
+  if (match && match.telefono) {
+    const inputTel = $('#fTelefono');
+    if (inputTel) inputTel.value = match.telefono;
+  }
 }
 
 async function enviarCita(){
@@ -362,7 +410,6 @@ async function enviarCita(){
     notificar_texto:notificar?'Si':'No'
   };
 
-  // destino según crear o editar
   const url = editandoId ? WEBHOOK_EDITAR : WEBHOOK_CREAR;
 
   if(!url){
@@ -376,27 +423,22 @@ async function enviarCita(){
     const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const textoResp=await res.text();
 
-    // intentar parsear la respuesta como JSON
     let resp=null;
     try{ resp=JSON.parse(textoResp); }catch(e){ resp=null; }
 
     if(!res.ok){
-      // error HTTP: mostrar lo que devolvió
       const msg=(resp && (resp.error||resp.message)) || textoResp || ('HTTP '+res.status);
       toast('Error: '+msg, true);
       return;
     }
 
-    // respuesta OK: chequear si el webhook indica error en el cuerpo
     if(resp && resp.ok===false){
       toast('Error: '+(resp.error||resp.message||'No se pudo crear'), true);
       return;
     }
 
-    // tomar los datos de la cita que devolvió el webhook
     let citaNueva = (resp && (resp.cita||resp.item||resp.data)) || null;
 
-    // si el webhook no devolvió la cita, usar lo que cargó el usuario como respaldo
     if(!citaNueva){
       citaNueva={
         id: (resp && resp.id) ? String(resp.id) : ('local-'+Date.now()),
@@ -408,11 +450,9 @@ async function enviarCita(){
     }
 
     if(editandoId){
-      // reemplazar la cita existente
       const i=DATA.findIndex(x=>String(x.id)===String(editandoId));
       if(i>=0) DATA[i]={...DATA[i], ...citaNueva};
     }else{
-      // agregar la nueva cita
       DATA.push(citaNueva);
     }
 
@@ -448,6 +488,7 @@ function render(){
   }
   main.innerHTML=html;
 }
+
 function cardHTML(d,delay){
   const cls=OBJ_MAP[d.objetivo]||'otro';
   const tel=(d.telefono||'').replace(/\D/g,'');
@@ -461,6 +502,7 @@ function cardHTML(d,delay){
     <div class="c-title">${esc(d.evento)||'(sin título)'}</div>
     <div class="c-meta">
       ${d.contacto?`<div class="c-row">${iconUser()}<b>${esc(d.contacto)}</b></div>`:''}
+      ${d.telefono?`<div class="c-row">${iconWa()}<span>${esc(d.telefono)}</span></div>`:''}
       ${d.ubicacion?`<div class="c-row">${iconLoc()}<span>${esc(d.ubicacion)}</span></div>`:''}
       ${pers.length?`<div class="person-badges">${pers.map(p=>`<span class="pb">${esc(p)}</span>`).join('')}</div>`:''}
     </div>
@@ -471,7 +513,7 @@ function cardHTML(d,delay){
     ${d.creacion_iso?`<div class="c-foot">Creado ${d.creado_por?'por '+esc(d.creado_por)+' ':''}el ${fmtCrea(d.creacion_iso)}</div>`:''}
   </div>`;
 }
-function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function esc(s){return(s||'').replace(/[&<>"]/g,c=>({'&':'&','<':'<','>':'>','"':'"'}[c]));}
 
 // MOTOR DE EXTRACCIÓN POR REGEX (sana el JSON roto de Make en tiempo real)
 function desglosarRespuestaMalformada(textoCrudo) {
@@ -486,155 +528,4 @@ function desglosarRespuestaMalformada(textoCrudo) {
     }
   }
 
-  const agendaRegex = /"agenda"\s*:\s*([\s\S]+?),\s*"contactos"\s*:/i;
-  const agendaMatch = texto.match(agendaRegex);
-  if (agendaMatch) {
-    let agendaStr = agendaMatch[1].trim();
-    if (!agendaStr.startsWith('[')) agendaStr = '[' + agendaStr + ']';
-    try {
-      agendaStr = agendaStr.replace(/'/g, '"');
-      agendaData = JSON.parse(agendaStr);
-    } catch(e) { console.error("Fallo parseo secundario de agenda:", e); }
-  }
-
-  const contactosRegex = /"contactos"\s*:\s*([\s\S]+)/i;
-  const contactosMatch = texto.match(contactosRegex);
-  if (contactosMatch) {
-    let contactosStr = contactosMatch[1].trim();
-    if (contactosStr.endsWith('}')) contactosStr = contactosStr.slice(0, -1).trim();
-    if (contactosStr.endsWith(',')) contactosStr = contactosStr.slice(0, -1).trim();
-    if (!contactosStr.startsWith('[')) contactosStr = '[' + contactosStr + ']';
-    try {
-      contactosStr = contactosStr.replace(/'/g, '"');
-      contactosData = JSON.parse(contactosStr);
-    } catch(e) { console.error("Fallo parseo secundario de contactos:", e); }
-  }
-
-  if (!agendaMatch && !contactosMatch) {
-    try {
-      let json = JSON.parse(texto);
-      if (json.agenda) agendaData = json.agenda;
-      if (json.contactos) contactosData = json.contactos;
-    } catch(e){}
-  }
-
-  return {
-    agenda: Array.isArray(agendaData) ? agendaData : [agendaData].filter(Boolean),
-    contactos: Array.isArray(contactosData) ? contactosData : [contactosData].filter(Boolean)
-  };
-}
-
-async function cargar(){
-  const btn=$('#refreshBtn');btn.classList.add('loading');
-  if(!WEBHOOK_URL){
-    DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
-    refreshUI();actualizarDatalistContactos();btn.classList.remove('loading');return;
-  }
-  try{
-    const res=await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:'listar',token:API_TOKEN})});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    
-    let textoRespuesta = await res.text();
-    
-    let datosCargados = desglosarRespuestaMalformada(textoRespuesta);
-    
-    DATA = datosCargados.agenda;
-    CONTACTOS = datosCargados.contactos;
-    
-    $('#statusPill').className='status-pill live';$('#statusTxt').textContent='En vivo';
-    refreshUI();
-    actualizarDatalistContactos(); 
-    toast('Agenda actualizada');
-  }catch(e){
-    console.error("Error crítico procesando la carga:", e);
-    DATA=DEMO; CONTACTOS=[]; $('#statusPill').className='status-pill demo';$('#statusTxt').textContent='Demo';
-    refreshUI();
-    actualizarDatalistContactos();
-    toast('Error al capturar datos de Make',true);
-  }finally{btn.classList.remove('loading');}
-}
-
-/* -------- DRAG & DROP de citas (cambiar hora dentro del día) -------- */
-let drag=null;
-
-function dragStart(e,id){
-  const el=e.currentTarget;
-  const tl=$('#tl');
-  drag={
-    id, el, tl,
-    startY:e.clientY,
-    startTop:parseFloat(el.style.top)||0,
-    moved:false
-  };
-  el.setPointerCapture(e.pointerId);
-  el.addEventListener('pointermove',dragMove);
-  el.addEventListener('pointerup',dragEnd);
-}
-
-function dragMove(e){
-  if(!drag)return;
-  const dy=e.clientY-drag.startY;
-  if(Math.abs(dy)>4)drag.moved=true;
-  if(!drag.moved)return;
-  drag.el.classList.add('dragging');
-  let nuevoTop=drag.startTop+dy;
-  const maxTop=(HORA_FIN-HORA_INI)*PX_HORA;
-  nuevoTop=Math.max(0,Math.min(maxTop,nuevoTop));
-  drag.el.style.top=nuevoTop+'px';
-  const horaFloat=HORA_INI+(nuevoTop/PX_HORA);
-  const horaSnap=Math.round(horaFloat);
-  const hint=$('#dropHint');
-  if(hint){
-    hint.style.top=((horaSnap-HORA_INI)*PX_HORA)+'px';
-    hint.dataset.hora=String(horaSnap).padStart(2,'0')+':00';
-    hint.classList.add('show');
-  }
-  drag.horaSnap=horaSnap;
-}
-
-async function dragEnd(e){
-  if(!drag)return;
-  const {el,id,moved,horaSnap}=drag;
-  el.removeEventListener('pointermove',dragMove);
-  el.removeEventListener('pointerup',dragEnd);
-  el.classList.remove('dragging');
-  const hint=$('#dropHint');if(hint)hint.classList.remove('show');
-  drag=null;
-
-  if(!moved){ abrirDetalle(id); return; }
-
-  const cita=DATA.find(x=>String(x.id)===String(id));
-  if(!cita||horaSnap==null){renderDia();return;}
-  const dt=new Date(cita.fecha);
-  const original=dt.getHours();
-  if(horaSnap===original){renderDia();return;}
-
-  dt.setHours(horaSnap,0,0,0);
-  const nuevaFechaISO=dayKey(dt)+'T'+String(horaSnap).padStart(2,'0')+':00:00';
-
-  const fechaPrevia=cita.fecha;
-  cita.fecha=nuevaFechaISO;
-  renderDia();
-
-  await guardarCambioHorario(id,nuevaFechaISO,fechaPrevia);
-}
-
-async function guardarCambioHorario(id,nuevaFecha,fechaPrevia){
-  if(!WEBHOOK_EDITAR){
-    toast('Horario cambiado (local — falta webhook de edición)');
-    return;
-  }
-  try{
-    const res=await fetch(WEBHOOK_EDITAR,{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({accion:'editar',token:API_TOKEN,id:id,fecha:nuevaFecha})});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    toast('Horario actualizado');
-  }catch(err){
-    const cita=DATA.find(x=>String(x.id)===String(id));
-    if(cita)cita.fecha=fechaPrevia;
-    renderDia();
-    toast('No se pudo guardar el cambio',true);
-  }
-}
-
-cargar();
+  const agendaRegex = /"agenda"\s*:\s*([\s\S]+?),\s*"contactos"\s*:/i
