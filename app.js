@@ -82,10 +82,10 @@ function refreshUI(){
   setOn('tgPersona',F.persona.size);setOn('tgObjetivo',F.objetivo.size);setOn('tgFranja',F.franja.size);
   setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
 
-  // CORRECCIÓN CENTRAL: Forzar ocultado o visibilidad estricta según la vista activa
+  // Forzar visibilidad correcta según la vista activa
   const esVistaDia = (vista === 'dia');
-  if($('#tgFecha')) $('#tgFecha').style.style.setProperty('display', esVistaDia ? 'none' : 'flex', 'important');
-  if($('#tgOrden')) $('#tgOrden').style.style.setProperty('display', esVistaDia ? 'none' : 'flex', 'important');
+  if($('#tgFecha')) $('#tgFecha').style.display = esVistaDia ? 'none' : 'flex';
+  if($('#tgOrden')) $('#tgOrden').style.display = esVistaDia ? 'none' : 'flex';
 
   const activo=F.persona.size||F.objetivo.size||F.franja.size||F.dia||F.texto||F.orden!=='fecha-asc';
   $('#clearAll').className='clear-all'+(activo?' show':'');
@@ -137,8 +137,6 @@ function setVista(v){
   $('#main').classList.toggle('hidden',v!=='lista');
   $('#calView').classList.toggle('hidden',v!=='dia');
   if(v==='dia') irDiaConCitas();
-  
-  // CORRECCIÓN CENTRAL: refreshUI se encarga de re-renderizar y evaluar los botones de filtro ocultos
   refreshUI();
 }
 
@@ -336,7 +334,7 @@ function actualizarDatalistContactos(){
   }).join('');
 }
 
-/* CORRECCIÓN CENTRAL: Lógica blindada contra nulos para evitar congelamientos */
+/* ALTA RÁPIDA DE CONTACTOS */
 function toggleFormContacto(show) {
   const form = $('#subFormContacto');
   if (!form) return;
@@ -413,7 +411,7 @@ async function enviarCita(){
     contacto:nombreContacto,
     contacto_id:contactoId,
     telefono:$('#fTelefono') ? $('#fTelefono').value.trim() : '',
-    ubicacion=$('#fUbicacion') ? $('#fUbicacion').value.trim() : '',
+    ubicacion: $('#fUbicacion') ? $('#fUbicacion').value.trim() : '', // <--- FIJADO: cambiado "=" por ":"
     notificar:notificar,
     notificar_texto:notificar?'Si':'No'
   };
