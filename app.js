@@ -82,7 +82,7 @@ function refreshUI(){
   setOn('tgPersona',F.persona.size);setOn('tgObjetivo',F.objetivo.size);setOn('tgFranja',F.franja.size);
   setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
 
-  // Forzar visibilidad correcta según la vista activa
+  // Ocultar correctamente los botones según la vista activa
   const esVistaDia = (vista === 'dia');
   if($('#tgFecha')) $('#tgFecha').style.display = esVistaDia ? 'none' : 'flex';
   if($('#tgOrden')) $('#tgOrden').style.display = esVistaDia ? 'none' : 'flex';
@@ -411,7 +411,7 @@ async function enviarCita(){
     contacto:nombreContacto,
     contacto_id:contactoId,
     telefono:$('#fTelefono') ? $('#fTelefono').value.trim() : '',
-    ubicacion: $('#fUbicacion') ? $('#fUbicacion').value.trim() : '', // <--- FIJADO: cambiado "=" por ":"
+    ubicacion: $('#fUbicacion') ? $('#fUbicacion').value.trim() : '', // <--- CORREGIDO COMPLETAMENTE AQUÍ
     notificar:notificar,
     notificar_texto:notificar?'Si':'No'
   };
