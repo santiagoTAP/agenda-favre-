@@ -81,6 +81,13 @@ function refreshUI(){
   badge('Persona',F.persona.size);badge('Objetivo',F.objetivo.size);badge('Franja',F.franja.size);
   setOn('tgPersona',F.persona.size);setOn('tgObjetivo',F.objetivo.size);setOn('tgFranja',F.franja.size);
   setOn('tgFecha',F.dia);setOn('tgOrden',F.orden!=='fecha-asc');
+
+  // ========== NUEVO: OCULTAR FILTROS INUTILES EN VISTA DIA ==========
+  const esVistaDia = (vista === 'dia');
+  if($('#tgFecha')) $('#tgFecha').style.display = esVistaDia ? 'none' : 'flex';
+  if($('#tgOrden')) $('#tgOrden').style.display = esVistaDia ? 'none' : 'flex';
+  // ==================================================================
+
   const activo=F.persona.size||F.objetivo.size||F.franja.size||F.dia||F.texto||F.orden!=='fecha-asc';
   $('#clearAll').className='clear-all'+(activo?' show':'');
   if(vista==='dia')renderDia();else render();
