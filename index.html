@@ -79,6 +79,24 @@
     </div>
     <div class="field"><label>Persona <span class="opt">(quién atiende)</span></label><input id="fPersona" placeholder="Ej: Santiago Favre"></div>
     <div class="field"><label>Contacto <span class="opt">(cliente)</span></label><input id="fContacto" list="listaContactos" placeholder="Buscá o escribí un nombre" autocomplete="off"><datalist id="listaContactos"></datalist></div>
+    <div style="margin: 10px 0;">
+  <button type="button" onclick="toggleFormContacto()" style="background:#007bff; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; font-weight:600;">
+    + Crear Nuevo Contacto
+  </button>
+</div>
+
+<div id="subFormContacto" style="display:none; background:#f8f9fa; padding:12px; border-radius:6px; border:1px solid #dee2e6; margin-bottom:15px;">
+  <h4 style="margin:0 0 10px 0; font-size:13px; color:#333;">Datos del Nuevo Contacto</h4>
+  <div style="display:flex; gap:8px; margin-bottom:8px;">
+    <input type="text" id="ncNombre" placeholder="Nombre" style="width:50%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+    <input type="text" id="ncApellido" placeholder="Apellido" style="width:50%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+  </div>
+  <input type="text" id="ncTelefono" placeholder="Teléfono (ej: 5492494...)" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px; margin-bottom:10px; box-sizing:border-box;">
+  <div style="display:flex; gap:8px;">
+    <button type="button" onclick="confirmarNuevoContacto()" style="background:#28a745; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">Confirmar</button>
+    <button type="button" onclick="toggleFormContacto(false)" style="background:#6c757d; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px;">Cancelar</button>
+  </div>
+</div>
     <div class="field"><label>Teléfono <span class="opt">(opcional)</span></label><input id="fTelefono" inputmode="tel" placeholder="Ej: 2494123456"></div>
     <div class="field"><label>Ubicación <span class="opt">(opcional)</span></label><input id="fUbicacion" placeholder="Dirección"></div>
     <div class="field-toggle">
